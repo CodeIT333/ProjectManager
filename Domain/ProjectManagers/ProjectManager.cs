@@ -5,15 +5,13 @@ using Domain.Projects;
 
 namespace Domain.ProjectManagers
 {
-    public class ProjectManager : AggregateRoot<Guid>
+    public class ProjectManager : Entity<Guid>
     {
-        public Address Address { get; set; }
-        public DateTime DateOfBirth { get; set; }
-        public string Phone { get; set; }
-        public string Email { get; set; }
-        public List<Project> Projects { get; set; } = [];
-        public List<Programmer> Employees { get; set; } = [];
-
-        
+        public Address Address { get; protected set; }
+        public DateTime DateOfBirth { get; protected set; }
+        public string Phone { get; protected set; }
+        public string Email { get; protected set; }
+        public List<Project> Projects { get; protected set; } = [];
+        public List<Programmer> Employees { get; protected set; } = [];
     }
 }

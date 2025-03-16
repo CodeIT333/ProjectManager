@@ -6,13 +6,13 @@ namespace Domain.Programmers
 {
     public class Programmer : Entity<Guid>
     {
-        public string Name { get; set; }
-        public Address Address { get; set; }
-        public DateTime DateOfBirth { get; set; }
-        public string Phone { get; set; }
-        public string Email { get; set; }
-        public List<Project> Projects { get; set; } = [];
-        public ProgrammerRole Role { get; set; }
-        public bool IsIntern { get; set; }
+        public string Name { get; protected set; }
+        public Address Address { get; protected set; }
+        public DateTime DateOfBirth { get; protected set; }
+        public string Phone { get; protected set; }
+        public string Email { get; protected set; }
+        public List<Project> Projects { get; protected set; } = [];
+        public ProgrammerRole Role { get; protected set; }
+        public bool IsIntern { get; protected set; }
     }
 }

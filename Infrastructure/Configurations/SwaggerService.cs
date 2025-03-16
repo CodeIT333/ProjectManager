@@ -6,7 +6,7 @@ namespace Infrastructure.Configurations
 {
     public static class SwaggerService
     {
-        public static void AddSwaggerDocumentation(this IServiceCollection services)
+        public static IServiceCollection AddSwaggerDocumentation(this IServiceCollection services)
         {
             services.AddEndpointsApiExplorer();
             services.AddSwaggerGen(x =>
@@ -18,6 +18,8 @@ namespace Infrastructure.Configurations
                         Version = "v1" 
                     });
             });
+
+            return services;
         }
 
         public static void UseSwaggerDocumentation(this IApplicationBuilder app)

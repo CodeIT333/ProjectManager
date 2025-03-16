@@ -9,14 +9,14 @@ namespace Application.Programmers.ProgrammerTypeMapping
         public void Register(TypeAdapterConfig config)
         {
             // DTO -> Entity
-            config.NewConfig<ProgrammerListDTO, Programmer>()
-                .MapWith(dto => new Programmer
+            config.NewConfig<Programmer, ProgrammerListDTO>()
+                .MapWith(src => new ProgrammerListDTO
                 {
-                    Name = dto.name,
-                    Phone = dto.phone,
-                    Email = dto.email,
-                    Role = dto.role,
-                    IsIntern = dto.isIntern
+                    name = src.Name,
+                    phone = src.Phone,
+                    email = src.Email,
+                    role = src.Role,
+                    isIntern = src.IsIntern
                 });
         }
     }

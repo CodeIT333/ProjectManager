@@ -1,4 +1,9 @@
-﻿using Microsoft.EntityFrameworkCore;
+﻿using Domain.Commons;
+using Domain.Customers;
+using Domain.Programmers;
+using Domain.ProjectManagers;
+using Domain.Projects;
+using Microsoft.EntityFrameworkCore;
 using Microsoft.Extensions.Configuration;
 
 namespace Persistence
@@ -18,6 +23,18 @@ namespace Persistence
             {
                 optionsBuilder.UseSqlServer(_configuration.GetConnectionString("DefaultConnection"));
             }
+        }
+
+        public DbSet<Programmer> Programmers { get; set; }
+        public DbSet<ProjectManager> ProjectManagers { get; set; }
+        public DbSet<Project> Projects { get; set; }
+        public DbSet<Customer> Customers { get; set; }
+        public DbSet<Address> Addresses { get; set; }
+
+        protected override void OnModelCreating(ModelBuilder modelBuilder)
+        {
+            // TODO set up address entity correctly
+            modelBuilder.Entity<Address>().HasNoKey();
         }
     }
 }
