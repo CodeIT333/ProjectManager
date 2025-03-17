@@ -8,7 +8,7 @@ namespace Application.Programmers.ProgrammerTypeMapping
     {
         public void Register(TypeAdapterConfig config)
         {
-            // DTO -> Entity
+            // Entity -> DTO
             config.NewConfig<Programmer, ProgrammerListDTO>()
                 .MapWith(src => new ProgrammerListDTO
                 {

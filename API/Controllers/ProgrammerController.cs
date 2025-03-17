@@ -5,7 +5,7 @@ using Microsoft.AspNetCore.Mvc;
 namespace API.Controllers
 {
     [ApiController]
-    [Route("api/programmers")]
+    [Route("programmers")]
     public class ProgrammerController : ControllerBase
     {
         private readonly ProgrammerService _programmerService;
