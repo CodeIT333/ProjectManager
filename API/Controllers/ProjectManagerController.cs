@@ -20,9 +20,9 @@ namespace API.Controllers
 
         [HttpGet]
         [SwaggerResponse(200, Type = typeof(List<ProjectManagerListDTO>))]
-        public async Task<ActionResult<List<ProjectManagerListDTO>>> ListProgrammers()
+        public async Task<ActionResult<List<ProjectManagerListDTO>>> ListProgrammersAsync()
         {
-            var data = await _projectManagerService.ListProjectManagers();
+            var data = await _projectManagerService.ListProjectManagersAsync();
             return Ok(data);
         }
     }

@@ -14,7 +14,7 @@ namespace Application.ProjectManagers
             _projectManagerRepo = projectManagerRepo;
         }
 
-        public async Task<List<ProjectManagerListDTO>> ListProjectManagers()
+        public async Task<List<ProjectManagerListDTO>> ListProjectManagersAsync()
         {
             var data = await _projectManagerRepo.ListProjectManagersAsync();
             return data.Adapt<List<ProjectManagerListDTO>>();

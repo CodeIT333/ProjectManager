@@ -3,15 +3,17 @@ Microsoft Visual Studio Solution File, Format Version 12.00
 # Visual Studio Version 17
 VisualStudioVersion = 17.11.35303.130
 MinimumVisualStudioVersion = 10.0.40219.1
-Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "Domain", "Domain\Domain.csproj", "{C35A5E08-654B-411A-9CDF-9A8BDF2B1C21}"
+Project("{9A19103F-16F7-4668-BE54-9A1E7A4F7556}") = "Domain", "Domain\Domain.csproj", "{C35A5E08-654B-411A-9CDF-9A8BDF2B1C21}"
 EndProject
-Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "Application", "Application\Application.csproj", "{FF69D33B-7C38-4C21-82E1-15CBA79CD230}"
+Project("{9A19103F-16F7-4668-BE54-9A1E7A4F7556}") = "Application", "Application\Application.csproj", "{FF69D33B-7C38-4C21-82E1-15CBA79CD230}"
 EndProject
-Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "API", "API\API.csproj", "{91E20D26-1853-46E1-A0BE-6481048895F9}"
+Project("{9A19103F-16F7-4668-BE54-9A1E7A4F7556}") = "API", "API\API.csproj", "{91E20D26-1853-46E1-A0BE-6481048895F9}"
 EndProject
-Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "Infrastructure", "Infrastructure\Infrastructure.csproj", "{3B989606-7082-46F4-A977-CB600D48670C}"
+Project("{9A19103F-16F7-4668-BE54-9A1E7A4F7556}") = "Infrastructure", "Infrastructure\Infrastructure.csproj", "{3B989606-7082-46F4-A977-CB600D48670C}"
 EndProject
-Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "Persistence", "Persistence\Persistence.csproj", "{2A35F515-1C04-474D-BA8D-78FDAAC508A8}"
+Project("{9A19103F-16F7-4668-BE54-9A1E7A4F7556}") = "Persistence", "Persistence\Persistence.csproj", "{2A35F515-1C04-474D-BA8D-78FDAAC508A8}"
+EndProject
+Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "UnitTest", "UnitTest\UnitTest.csproj", "{37D4ACC0-7981-4FB7-B96D-8644D0010E99}"
 EndProject
 Global
 	GlobalSection(SolutionConfigurationPlatforms) = preSolution
@@ -39,6 +41,10 @@ Global
 		{2A35F515-1C04-474D-BA8D-78FDAAC508A8}.Debug|Any CPU.Build.0 = Debug|Any CPU
 		{2A35F515-1C04-474D-BA8D-78FDAAC508A8}.Release|Any CPU.ActiveCfg = Release|Any CPU
 		{2A35F515-1C04-474D-BA8D-78FDAAC508A8}.Release|Any CPU.Build.0 = Release|Any CPU
+		{37D4ACC0-7981-4FB7-B96D-8644D0010E99}.Debug|Any CPU.ActiveCfg = Debug|Any CPU
+		{37D4ACC0-7981-4FB7-B96D-8644D0010E99}.Debug|Any CPU.Build.0 = Debug|Any CPU
+		{37D4ACC0-7981-4FB7-B96D-8644D0010E99}.Release|Any CPU.ActiveCfg = Release|Any CPU
+		{37D4ACC0-7981-4FB7-B96D-8644D0010E99}.Release|Any CPU.Build.0 = Release|Any CPU
 	EndGlobalSection
 	GlobalSection(SolutionProperties) = preSolution
 		HideSolutionNode = FALSE

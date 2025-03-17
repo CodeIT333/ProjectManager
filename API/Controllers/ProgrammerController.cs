@@ -20,9 +20,9 @@ namespace API.Controllers
 
         [HttpGet]
         [SwaggerResponse(200, Type = typeof(List<ProgrammerListDTO>))]
-        public async Task<ActionResult<List<ProgrammerListDTO>>> ListProgrammers()
+        public async Task<ActionResult<List<ProgrammerListDTO>>> ListProgrammersAsync()
         {
-            var data = await _programmerService.ListProgrammers();
+            var data = await _programmerService.ListProgrammersAsync();
             return Ok(data);
         }
         

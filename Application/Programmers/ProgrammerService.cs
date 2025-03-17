@@ -14,7 +14,7 @@ namespace Application.Programmers
             _programmerRepo = programmerRepo;
         }
 
-        public async Task<List<ProgrammerListDTO>> ListProgrammers()
+        public async Task<List<ProgrammerListDTO>> ListProgrammersAsync()
         {
             var data = await _programmerRepo.ListProgrammersAsync();
             return data.Adapt<List<ProgrammerListDTO>>();

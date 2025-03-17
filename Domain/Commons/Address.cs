@@ -6,18 +6,18 @@ namespace Domain.Commons
     public class Address : ValueObject
     {
         [Required, MaxLength(50)]
-        public string Country { get; set; }
+        public string Country { get; protected set; }
         [Required, MaxLength(10)]
-        public string ZipCode { get; set; }
+        public string ZipCode { get; protected set; }
         [Required, MaxLength(50)]
-        public string County { get; set; }
+        public string County { get; protected set; }
         [Required, MaxLength(100)]
-        public string Settlement { get; set; }
+        public string Settlement { get; protected set; }
         [Required, MaxLength(50)]
-        public string Street { get; set; }
+        public string Street { get; protected set; }
         [Required, MaxLength(10)]
-        public string HouseNumber { get; set; } // 13/a, 24.
-        public int? Door { get; set; } // 11
+        public string HouseNumber { get; protected set; } // 13/a, 24.
+        public int? Door { get; protected set; } // 11
 
         protected override IEnumerable<object> GetEqualityComponents()
         {
