@@ -2,7 +2,7 @@
 {
     public class AddressDTO
     {
-        // TODO validations
+        // TODO validations (swaggervalidation?)
         public string country { get; set; }
         public string zipCode { get; set; }
         public string county { get; set; }

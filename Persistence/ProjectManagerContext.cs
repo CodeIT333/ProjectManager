@@ -43,17 +43,31 @@ namespace Persistence
         {
             SetEntityKeys(modelBuilder);
             ConfigureEntities(modelBuilder);
-
-            
         }
 
         private void SetEntityKeys(ModelBuilder modelBuilder)
         {
-            modelBuilder.Entity<Programmer>().HasKey(p => p.Id);
-            modelBuilder.Entity<ProjectManager>().HasKey(pm => pm.Id);
+            modelBuilder.Entity<Programmer>(entity =>
+            {
+                entity.HasKey(p => p.Id); // add primary key
+                entity.Property(p => p.Id).ValueGeneratedNever(); // disable auto generate for id (always generate by ourself)
+            });
+            modelBuilder.Entity<ProjectManager>(entity =>
+            {
+                entity.HasKey(pm => pm.Id);
+                entity.Property(pm => pm.Id).ValueGeneratedNever();
+            });
             modelBuilder.Entity<ProgrammerProject>().HasKey(pp => new { pp.ProgrammerId, pp.ProjectId });
-            modelBuilder.Entity<Project>().HasKey(p => p.Id);
-            modelBuilder.Entity<Customer>().HasKey(c => c.Id);
+            modelBuilder.Entity<Project>(entity =>
+            {
+                entity.HasKey(p => p.Id);
+                entity.Property(p => p.Id).ValueGeneratedNever();
+            });
+            modelBuilder.Entity<Customer>(entity =>
+            {
+                entity.HasKey(c => c.Id);
+                entity.Property(c => c.Id).ValueGeneratedNever();
+            });
         }
 
         private void ConfigureEntities(ModelBuilder modelBuilder)

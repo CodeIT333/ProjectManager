@@ -1,4 +1,5 @@
 ﻿using Application.Programmers;
+using Application.ProjectManagers;
 using Mapster;
 using Microsoft.Extensions.DependencyInjection;
 
@@ -13,6 +14,7 @@ namespace Application.Configurations
             services.AddSingleton(Mappingconfig); // live through the application lifetime
 
             services.AddScoped<ProgrammerService>();
+            services.AddScoped<ProjectManagerService>();
 
             return services;
         }

@@ -4,6 +4,6 @@ namespace Application.Programmers
 {
     public interface IProgrammerRepository
     {
-        Task<List<Programmer>> ListProgrammers();
+        Task<List<Programmer>> ListProgrammersAsync();
     }
 }

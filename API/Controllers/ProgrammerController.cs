@@ -1,6 +1,7 @@
 ﻿using Application.Programmers;
 using Application.Programmers.DTOs;
 using Microsoft.AspNetCore.Mvc;
+using Swashbuckle.AspNetCore.Annotations;
 
 namespace API.Controllers
 {
@@ -18,7 +19,8 @@ namespace API.Controllers
         }
 
         [HttpGet]
-        public async Task<ActionResult<List<ProgrammerListDTO>>> GetProgrammers()
+        [SwaggerResponse(200, Type = typeof(List<ProgrammerListDTO>))]
+        public async Task<ActionResult<List<ProgrammerListDTO>>> ListProgrammers()
         {
             var data = await _programmerService.ListProgrammers();
             return Ok(data);

@@ -1,3 +1,4 @@
+using API.Configurations;
 using Application.Configurations;
 using Infrastructure.Configurations;
 
@@ -8,6 +9,7 @@ builder.Services.AddControllers();
 
 builder.Services.AddSwaggerDocumentation();
 
+builder.Services.AddAPIServices();
 builder.Services.AddApplicationServices();
 builder.Services.AddPersistenceServices(builder.Configuration);
 
