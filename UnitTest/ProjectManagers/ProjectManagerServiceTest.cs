@@ -19,7 +19,7 @@ namespace UnitTest.ProjectManagers
         }
 
         [Fact]
-        public async Task ListProjectManager_ReturnsListOfProjectManagers()
+        public async Task ListProjectManagers_ReturnsListOfProjectManagers()
         {
             var mockData = new List<ProjectManager>
             {

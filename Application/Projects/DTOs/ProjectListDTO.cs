@@ -1,6 +1,4 @@
-﻿using Application.Commons.DTOs;
-
-namespace Application.Projects.DTOs
+﻿namespace Application.Projects.DTOs
 {
     public class ProjectListDTO
     {
