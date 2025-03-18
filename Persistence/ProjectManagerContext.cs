@@ -1,5 +1,4 @@
-﻿using Domain.Commons;
-using Domain.Customers;
+﻿using Domain.Customers;
 using Domain.Programmers;
 using Domain.ProjectManagers;
 using Domain.Projects;
