@@ -1,4 +1,5 @@
-using Application.Extensions;
+using API.Configurations;
+using Application.Configurations;
 using Infrastructure.Configurations;
 
 var builder = WebApplication.CreateBuilder(args);
@@ -8,7 +9,9 @@ builder.Services.AddControllers();
 
 builder.Services.AddSwaggerDocumentation();
 
-builder.Services.AddApplicationServices(builder.Configuration);
+builder.Services.AddAPIServices();
+builder.Services.AddApplicationServices();
+builder.Services.AddPersistenceServices(builder.Configuration);
 
 var app = builder.Build();
 

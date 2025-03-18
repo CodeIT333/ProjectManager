@@ -3,6 +3,7 @@ using System;
 using Microsoft.EntityFrameworkCore;
 using Microsoft.EntityFrameworkCore.Infrastructure;
 using Microsoft.EntityFrameworkCore.Metadata;
+using Microsoft.EntityFrameworkCore.Migrations;
 using Microsoft.EntityFrameworkCore.Storage.ValueConversion;
 using Persistence;
 
@@ -11,9 +12,11 @@ using Persistence;
 namespace Persistence.Migrations
 {
     [DbContext(typeof(ProjectManagerContext))]
-    partial class ProjectManagerContextModelSnapshot : ModelSnapshot
+    [Migration("20250316135456_AddressToProgrammer")]
+    partial class AddressToProgrammer
     {
-        protected override void BuildModel(ModelBuilder modelBuilder)
+        /// <inheritdoc />
+        protected override void BuildTargetModel(ModelBuilder modelBuilder)
         {
 #pragma warning disable 612, 618
             modelBuilder
@@ -30,18 +33,15 @@ namespace Persistence.Migrations
 
                     b.Property<string>("Email")
                         .IsRequired()
-                        .HasMaxLength(100)
-                        .HasColumnType("nvarchar(100)");
+                        .HasColumnType("nvarchar(max)");
 
                     b.Property<string>("Name")
                         .IsRequired()
-                        .HasMaxLength(200)
-                        .HasColumnType("nvarchar(200)");
+                        .HasColumnType("nvarchar(max)");
 
                     b.Property<string>("Phone")
                         .IsRequired()
-                        .HasMaxLength(20)
-                        .HasColumnType("nvarchar(20)");
+                        .HasColumnType("nvarchar(max)");
 
                     b.HasKey("Id");
 
@@ -59,21 +59,18 @@ namespace Persistence.Migrations
 
                     b.Property<string>("Email")
                         .IsRequired()
-                        .HasMaxLength(100)
-                        .HasColumnType("nvarchar(100)");
+                        .HasColumnType("nvarchar(max)");
 
                     b.Property<bool>("IsIntern")
                         .HasColumnType("bit");
 
                     b.Property<string>("Name")
                         .IsRequired()
-                        .HasMaxLength(200)
-                        .HasColumnType("nvarchar(200)");
+                        .HasColumnType("nvarchar(max)");
 
                     b.Property<string>("Phone")
                         .IsRequired()
-                        .HasMaxLength(20)
-                        .HasColumnType("nvarchar(20)");
+                        .HasColumnType("nvarchar(max)");
 
                     b.Property<Guid?>("ProjectManagerId")
                         .HasColumnType("uniqueidentifier");
@@ -99,37 +96,15 @@ namespace Persistence.Migrations
 
                     b.Property<string>("Email")
                         .IsRequired()
-                        .HasMaxLength(100)
-                        .HasColumnType("nvarchar(100)");
-
-                    b.Property<string>("Name")
-                        .IsRequired()
-                        .HasMaxLength(200)
-                        .HasColumnType("nvarchar(200)");
+                        .HasColumnType("nvarchar(max)");
 
                     b.Property<string>("Phone")
                         .IsRequired()
-                        .HasMaxLength(20)
-                        .HasColumnType("nvarchar(20)");
+                        .HasColumnType("nvarchar(max)");
 
                     b.HasKey("Id");
 
                     b.ToTable("ProjectManagers");
-                });
-
-            modelBuilder.Entity("Domain.Projects.ProgrammerProject", b =>
-                {
-                    b.Property<Guid>("ProgrammerId")
-                        .HasColumnType("uniqueidentifier");
-
-                    b.Property<Guid>("ProjectId")
-                        .HasColumnType("uniqueidentifier");
-
-                    b.HasKey("ProgrammerId", "ProjectId");
-
-                    b.HasIndex("ProjectId");
-
-                    b.ToTable("ProgrammerProjects");
                 });
 
             modelBuilder.Entity("Domain.Projects.Project", b =>
@@ -158,6 +133,21 @@ namespace Persistence.Migrations
                     b.HasIndex("ProjectManagerId");
 
                     b.ToTable("Projects");
+                });
+
+            modelBuilder.Entity("ProgrammerProject", b =>
+                {
+                    b.Property<Guid>("EmployeesId")
+                        .HasColumnType("uniqueidentifier");
+
+                    b.Property<Guid>("ProjectsId")
+                        .HasColumnType("uniqueidentifier");
+
+                    b.HasKey("EmployeesId", "ProjectsId");
+
+                    b.HasIndex("ProjectsId");
+
+                    b.ToTable("ProgrammerProject");
                 });
 
             modelBuilder.Entity("Domain.Programmers.Programmer", b =>
@@ -268,25 +258,6 @@ namespace Persistence.Migrations
                         .IsRequired();
                 });
 
-            modelBuilder.Entity("Domain.Projects.ProgrammerProject", b =>
-                {
-                    b.HasOne("Domain.Programmers.Programmer", "Programmer")
-                        .WithMany("ProgrammerProjects")
-                        .HasForeignKey("ProgrammerId")
-                        .OnDelete(DeleteBehavior.Cascade)
-                        .IsRequired();
-
-                    b.HasOne("Domain.Projects.Project", "Project")
-                        .WithMany("ProgrammerProjects")
-                        .HasForeignKey("ProjectId")
-                        .OnDelete(DeleteBehavior.Cascade)
-                        .IsRequired();
-
-                    b.Navigation("Programmer");
-
-                    b.Navigation("Project");
-                });
-
             modelBuilder.Entity("Domain.Projects.Project", b =>
                 {
                     b.HasOne("Domain.Customers.Customer", "Customer")
@@ -306,14 +277,24 @@ namespace Persistence.Migrations
                     b.Navigation("ProjectManager");
                 });
 
+            modelBuilder.Entity("ProgrammerProject", b =>
+                {
+                    b.HasOne("Domain.Programmers.Programmer", null)
+                        .WithMany()
+                        .HasForeignKey("EmployeesId")
+                        .OnDelete(DeleteBehavior.Cascade)
+                        .IsRequired();
+
+                    b.HasOne("Domain.Projects.Project", null)
+                        .WithMany()
+                        .HasForeignKey("ProjectsId")
+                        .OnDelete(DeleteBehavior.Cascade)
+                        .IsRequired();
+                });
+
             modelBuilder.Entity("Domain.Customers.Customer", b =>
                 {
                     b.Navigation("Projects");
-                });
-
-            modelBuilder.Entity("Domain.Programmers.Programmer", b =>
-                {
-                    b.Navigation("ProgrammerProjects");
                 });
 
             modelBuilder.Entity("Domain.ProjectManagers.ProjectManager", b =>
@@ -321,11 +302,6 @@ namespace Persistence.Migrations
                     b.Navigation("Employees");
 
                     b.Navigation("Projects");
-                });
-
-            modelBuilder.Entity("Domain.Projects.Project", b =>
-                {
-                    b.Navigation("ProgrammerProjects");
                 });
 #pragma warning restore 612, 618
         }
