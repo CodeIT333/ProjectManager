@@ -1,11 +1,13 @@
 ﻿using Application.Programmers;
 using Application.ProjectManagers;
+using Application.Projects;
 using Microsoft.EntityFrameworkCore;
 using Microsoft.Extensions.Configuration;
 using Microsoft.Extensions.DependencyInjection;
 using Persistence;
 using Persistence.Repositories.Programmers;
 using Persistence.Repositories.ProjectManagers;
+using Persistence.Repositories.Projects;
 
 namespace Infrastructure.Configurations
 {
@@ -20,6 +22,7 @@ namespace Infrastructure.Configurations
             // register Repos
             services.AddScoped<IProgrammerRepository, ProgrammerRepository>();
             services.AddScoped<IProjectManagerRepository, ProjectManagerRepository>();
+            services.AddScoped<IProjectRepository, ProjectRepository>();
 
             return services;
         }

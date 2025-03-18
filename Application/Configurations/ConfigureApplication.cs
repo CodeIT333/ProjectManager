@@ -1,5 +1,6 @@
 ﻿using Application.Programmers;
 using Application.ProjectManagers;
+using Application.Projects;
 using Mapster;
 using Microsoft.Extensions.DependencyInjection;
 
@@ -15,6 +16,7 @@ namespace Application.Configurations
 
             services.AddScoped<ProgrammerService>();
             services.AddScoped<ProjectManagerService>();
+            services.AddScoped<ProjectService>();
 
             return services;
         }

@@ -1,8 +1,9 @@
-﻿namespace Application.ProjectManagers.DTOs
+﻿using Application.Commons.DTOs;
+
+namespace Application.ProjectManagers.DTOs
 {
-    public class ProjectManagerListDTO
+    public class ProjectManagerListDTO : NameDTO
     {
-        public string name { get; set; }
         public string email { get; set; }
         public string phone { get; set; }
     }
