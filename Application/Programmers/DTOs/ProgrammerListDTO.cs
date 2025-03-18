@@ -1,10 +1,10 @@
-﻿using Domain.Programmers;
+﻿using Application.Commons.DTOs;
+using Domain.Programmers;
 
 namespace Application.Programmers.DTOs
 {
-    public class ProgrammerListDTO
+    public class ProgrammerListDTO : NameDTO
     {
-        public string name { get; set; }
         public string phone { get; set; }
         public string email { get; set; }
         public ProgrammerRole role { get; set; }

@@ -4,12 +4,11 @@ using Application.Projects;
 using Microsoft.EntityFrameworkCore;
 using Microsoft.Extensions.Configuration;
 using Microsoft.Extensions.DependencyInjection;
-using Persistence;
 using Persistence.Repositories.Programmers;
 using Persistence.Repositories.ProjectManagers;
 using Persistence.Repositories.Projects;
 
-namespace Infrastructure.Configurations
+namespace Persistence.Configurations
 {
     public static class ConfigurePersistence
     {

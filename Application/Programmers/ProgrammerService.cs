@@ -1,4 +1,5 @@
 ﻿using Application.Programmers.DTOs;
+using Infrastructure.Exceptions;
 using Mapster;
 
 namespace Application.Programmers
@@ -16,8 +17,17 @@ namespace Application.Programmers
 
         public async Task<List<ProgrammerListDTO>> ListProgrammersAsync()
         {
-            var data = await _programmerRepo.ListProgrammersAsync();
-            return data.Adapt<List<ProgrammerListDTO>>();
+            var programmers = await _programmerRepo.ListProgrammersAsync();
+            return programmers.Adapt<List<ProgrammerListDTO>>();
+        }
+
+        public async Task<ProgrammerGetDTO> GetProgrammerAsync(Guid id)
+        {
+            var programmer = await _programmerRepo.GetProgrammerAsync(id);
+            if (programmer == null)
+                throw new NotFoundException(ErrorMessages.NOT_FOUND_PROGRAMMER);
+
+            return programmer.Adapt<ProgrammerGetDTO>();
         }
     }
 }
