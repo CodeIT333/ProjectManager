@@ -1,13 +1,12 @@
 ﻿using Domain.Customers;
 using Domain.ProjectManagers;
 using Domain.Projects;
-using UnitTest.Programmers;
 
 namespace UnitTest.Projects
 {
     internal class TestableProject : Project
     {
-        public TestableProject(ProjectManager manager, Customer customer, List<TestableProgrammer> programmers, DateOnly startDate, string description)
+        public TestableProject(ProjectManager manager, Customer customer, DateOnly startDate, string description)
         {
             ProjectManagerId = manager.Id;
             ProjectManager = manager;

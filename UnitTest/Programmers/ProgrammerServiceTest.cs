@@ -5,7 +5,7 @@ using FluentAssertions;
 using Infrastructure.Exceptions;
 using Moq;
 using UnitTest.Commons;
-using UnitTest.Customers;
+using UnitTest.Configurations;
 using UnitTest.ProjectManagers;
 using UnitTest.Projects;
 
@@ -23,6 +23,7 @@ namespace UnitTest.Programmers
             _service = new ProgrammerService(_mockRepo.Object);
         }
 
+        /*--------------------------------------------------------List-------------------------------------------------------*/
         [Fact]
         public async Task ListProgrammers_ReturnsListOfProgrammers()
         {
@@ -64,10 +65,12 @@ namespace UnitTest.Programmers
             result.Should().BeEmpty();
         }
 
+        /*--------------------------------------------------------Get-------------------------------------------------------*/
         [Fact]
-        public async Task GetProgrammerById_ReturnsProgrammerWithOneProjectAndWithoutProjectManager()
+        public async Task GetProgrammerById_ReturnsProgrammerWithAddressAndOneProjectAndWithoutProjectManager()
         {
-            var programmer = new TestableProgrammer("John Doe", "06201234567", "john@example.com", ProgrammerRole.FullStack, false);
+            var programmerAddress = new TestableAddress("Hungary", "6722", "Csongrád", "Szeged", "Kossuth Lajos sugárút", "15.", 1);
+            var programmer = new TestableProgrammer("John Doe", "06201234567", "john@example.com", ProgrammerRole.FullStack, false, programmerAddress);
             
             var customerForProject = new TestableCustomer("Acme Corp", "06501234566", "project@acme.com");
             
@@ -76,7 +79,6 @@ namespace UnitTest.Programmers
             var project = new TestableProject(
                 projectManagerForProject,
                 customerForProject,
-                new List<TestableProgrammer> { programmer },
                 new DateOnly(2024, 3, 18),
                 "Project description 1"
             );
@@ -98,6 +100,16 @@ namespace UnitTest.Programmers
             result.email.Should().Be("john@example.com");
             result.role.Should().Be(ProgrammerRole.FullStack);
             result.isIntern.Should().BeFalse();
+
+            result.address.Should().NotBeNull();
+            result.address!.country.Should().Be("Hungary");
+            result.address!.zipCode.Should().Be("6722");
+            result.address.county.Should().Be("Csongrád");
+            result.address!.settlement.Should().Be("Szeged");
+            result.address!.street.Should().Be("Kossuth Lajos sugárút");
+            result.address!.houseNumber.Should().Be("15.");
+            result.address!.door.Should().Be(1);
+
             result.projects.Should().HaveCount(1);
             result.projectManagerName.Should().BeNull();
             result.projects[0].projectManagerName.Should().Be("Alice Johnson");

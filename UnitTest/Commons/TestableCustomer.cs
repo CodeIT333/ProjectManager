@@ -1,6 +1,6 @@
 ﻿using Domain.Customers;
 
-namespace UnitTest.Customers
+namespace UnitTest.Commons
 {
     internal class TestableCustomer : Customer
     {

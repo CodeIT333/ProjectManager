@@ -4,7 +4,7 @@ using Domain.Projects;
 using FluentAssertions;
 using Moq;
 using UnitTest.Commons;
-using UnitTest.Customers;
+using UnitTest.Configurations;
 using UnitTest.Programmers;
 using UnitTest.ProjectManagers;
 
@@ -22,6 +22,7 @@ namespace UnitTest.Projects
             _service = new ProjectService(_mockRepo.Object);
         }
 
+        /*--------------------------------------------------------List-------------------------------------------------------*/
         [Fact]
         public async Task ListProjects_ReturnsListOfProjects()
         {
@@ -32,19 +33,17 @@ namespace UnitTest.Projects
             var customer2 = new TestableCustomer("Tech Innovators", "06501234599", "project@techinn.com");
 
             var programmer1 = new TestableProgrammer("John Doe", "06201234567", "john@example.com", ProgrammerRole.FullStack, false);
-            var programmer2 = new TestableProgrammer("Jane Smith", "06207654321", "john@example.com", ProgrammerRole.Backend, true);
+            var programmer2 = new TestableProgrammer("Jane Smith", "06207654321", "jane@example.com", ProgrammerRole.Backend, true);
 
             var project1 = new TestableProject(
                 projectManager1,
                 customer1,
-                new List<TestableProgrammer> { programmer1, programmer2 },
                 new DateOnly(2024, 3, 18),
                 "Project description 1"
             );
             var project2 = new TestableProject(
                 projectManager2,
                 customer2,
-                new List<TestableProgrammer> { programmer1 },
                 new DateOnly(2024, 5, 1),
                 "Project description 2"
             );
