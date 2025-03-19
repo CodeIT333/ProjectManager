@@ -1,4 +1,5 @@
-﻿using Domain.Programmers;
+﻿using Domain.Commons;
+using Domain.Programmers;
 using Domain.ProjectManagers;
 
 namespace UnitTest.Programmers
@@ -14,6 +15,16 @@ namespace UnitTest.Programmers
             IsIntern = isIntern;
             ProjectManagerId = manager?.Id;
             ProjectManager = manager;
+        }
+
+        public TestableProgrammer(string name, string phone, string email, ProgrammerRole role, bool isIntern, Address address)
+        {
+            Name = name;
+            Phone = phone;
+            Email = email;
+            Role = role;
+            IsIntern = isIntern;
+            Address = address;
         }
     }
 }

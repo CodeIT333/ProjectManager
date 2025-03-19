@@ -1,6 +1,4 @@
-﻿using Application.Programmers.DTOs;
-using Application.Programmers;
-using Application.ProjectManagers;
+﻿using Application.ProjectManagers;
 using Application.ProjectManagers.DTOs;
 using Domain.Commons.Models;
 using Infrastructure.Exceptions;

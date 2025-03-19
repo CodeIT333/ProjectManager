@@ -1,7 +1,7 @@
 ﻿using Application.Configurations;
 using Mapster;
 
-namespace UnitTest.Commons
+namespace UnitTest.Configurations
 {
     internal class TestMapsterConfig
     {
