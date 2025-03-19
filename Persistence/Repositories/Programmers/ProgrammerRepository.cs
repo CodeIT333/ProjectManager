@@ -13,5 +13,11 @@ namespace Persistence.Repositories.Programmers
         }
 
         public async Task<List<Programmer>> ListProgrammersAsync() => await _dbContext.Programmers.ToListAsync();
+
+        public async Task<Programmer?> GetProgrammerAsync(Guid id) => await _dbContext.Programmers
+            .Include(p => p.ProgrammerProjects).ThenInclude(pp => pp.Project).ThenInclude(p => p.ProjectManager)
+            .Include(p => p.ProjectManager)
+            .Include(p => p.Address)
+            .SingleOrDefaultAsync(p => p.Id == id);
     }
 }

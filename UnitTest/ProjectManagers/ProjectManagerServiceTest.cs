@@ -34,7 +34,11 @@ namespace UnitTest.ProjectManagers
             result.Should().NotBeNull();
             result.Should().HaveCount(2);
             result[0].name.Should().Be("Manager X");
+            result[0].phone.Should().Be("987-654-3210");
+            result[0].email.Should().Be("managerX@example.com");
             result[1].name.Should().Be("Manager Y");
+            result[1].phone.Should().Be("876-543-2109");
+            result[1].email.Should().Be("managerY@example.com");
         }
 
         [Fact]

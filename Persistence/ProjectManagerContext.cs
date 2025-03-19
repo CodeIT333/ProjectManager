@@ -100,7 +100,7 @@ namespace Persistence
 
             // pm [0/1] - [Many] programmer
             modelBuilder.Entity<Programmer>()
-                .HasOne<ProjectManager>()
+                .HasOne(p => p.ProjectManager)
                 .WithMany(pm => pm.Employees)
                 .HasForeignKey(p => p.ProjectManagerId)
                 .IsRequired(false);

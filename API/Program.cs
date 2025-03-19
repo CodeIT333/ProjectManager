@@ -1,6 +1,7 @@
 using API.Configurations;
 using Application.Configurations;
 using Infrastructure.Configurations;
+using Persistence.Configurations;
 
 var builder = WebApplication.CreateBuilder(args);
 
@@ -20,6 +21,7 @@ if (app.Environment.IsDevelopment())
 {
     app.UseSwaggerDocumentation();
 }
+app.UseMiddleware<ConfigureException>();
 
 app.UseHttpsRedirection();
 

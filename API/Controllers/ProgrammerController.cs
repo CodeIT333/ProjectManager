@@ -1,5 +1,7 @@
 ﻿using Application.Programmers;
 using Application.Programmers.DTOs;
+using Domain.Commons.Models;
+using Infrastructure.Exceptions;
 using Microsoft.AspNetCore.Mvc;
 using Swashbuckle.AspNetCore.Annotations;
 
@@ -19,12 +21,20 @@ namespace API.Controllers
         }
 
         [HttpGet]
-        [SwaggerResponse(200, Type = typeof(List<ProgrammerListDTO>))]
+        [SwaggerResponse(200, Type = typeof(List<ProgrammerListDTO>))] // or ProducesResponseType
         public async Task<ActionResult<List<ProgrammerListDTO>>> ListProgrammersAsync()
         {
             var data = await _programmerService.ListProgrammersAsync();
             return Ok(data);
         }
-        
+
+        [HttpGet("{id}")]
+        [SwaggerResponse(200, Type = typeof(ProgrammerGetDTO))]
+        [SwaggerResponse(404, ErrorMessages.NOT_FOUND_PROGRAMMER, typeof(ErrorResponse))]
+        public async Task<ActionResult<ProgrammerGetDTO>> GetProgrammerAsync(Guid id)
+        {
+            var data = await _programmerService.GetProgrammerAsync(id);
+            return Ok(data);
+        }
     }
 }
