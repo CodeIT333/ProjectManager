@@ -29,6 +29,17 @@ namespace Application.Projects.ProjectTypeMappings
                     startDate = src.StartDate,
                     description = src.Description
                 });
+
+            // Entity -> DTO
+            config.NewConfig<Project, ProjectInProjectManagerGetDTO>()
+                .MapWith(src => new ProjectInProjectManagerGetDTO
+                {
+                    projectId = src.Id,
+                    projectDescription = src.Description,
+                    customerName = src.Customer.Name,
+                    customerPhone = src.Customer.Phone,
+                    customerEmail = src.Customer.Email
+                });
         }
     }
 }

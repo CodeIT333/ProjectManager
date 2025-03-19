@@ -42,6 +42,18 @@ namespace Application.Programmers.ProgrammerTypeMappings
                     role = src.Role,
                     isIntern = src.IsIntern
                 });
+
+            // Entity -> DTO
+            config.NewConfig<Programmer, ProgrammerInProjectManagerDTO>()
+                .MapWith(src => new ProgrammerInProjectManagerDTO
+                {
+                    programmerId = src.Id,
+                    programmerName = src.Name,
+                    programmerPhone= src.Phone,
+                    programmerEmail = src.Email,
+                    programmerRole = src.Role,
+                    programmerIsIntern = src.IsIntern
+                });
         }
     }
 }
