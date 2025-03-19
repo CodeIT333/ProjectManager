@@ -5,6 +5,7 @@ namespace Application.Programmers.DTOs
 {
     public class ProgrammerListDTO : NameDTO
     {
+        public Guid id { get; set; }
         public string phone { get; set; }
         public string email { get; set; }
         public ProgrammerRole role { get; set; }

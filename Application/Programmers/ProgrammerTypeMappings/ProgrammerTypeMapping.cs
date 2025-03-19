@@ -4,7 +4,7 @@ using Application.Projects.DTOs;
 using Domain.Programmers;
 using Mapster;
 
-namespace Application.Programmers.ProgrammerTypeMapping
+namespace Application.Programmers.ProgrammerTypeMappings
 {
     public class ProgrammerTypeMapping : IRegister
     {
@@ -14,6 +14,7 @@ namespace Application.Programmers.ProgrammerTypeMapping
             config.NewConfig<Programmer, ProgrammerListDTO>()
                 .MapWith(src => new ProgrammerListDTO
                 {
+                    id = src.Id,
                     name = src.Name,
                     phone = src.Phone,
                     email = src.Email,
@@ -25,16 +26,19 @@ namespace Application.Programmers.ProgrammerTypeMapping
             config.NewConfig<Programmer, ProgrammerGetDTO>()
                 .MapWith(src => new ProgrammerGetDTO
                 {
+                    id = src.Id,
                     name = src.Name,
                     phone = src.Phone,
                     email = src.Email,
                     address = src.Address.Adapt<AddressDTO>(),
                     dateOfBirth = src.DateOfBirth,
-                    projects = src.ProgrammerProjects
-                        .Where(pp => pp.ProgrammerId == src.Id)
-                        .Select(pp => pp.Project)
-                        .Adapt<List<ProjectInProgrammerGetDTO>>(),
-                    projectManager = src.ProjectManager.Adapt<NameDTO>(),
+                    projects = src.ProgrammerProjects.Any() ? 
+                        src.ProgrammerProjects
+                            .Select(pp => pp.Project)
+                            .Adapt<List<ProjectInProgrammerGetDTO>>() :
+                        new(),
+                    projectManagerId = src.ProjectManagerId,
+                    projectManagerName = src.ProjectManager != null ? src.ProjectManager.Name : null,
                     role = src.Role,
                     isIntern = src.IsIntern
                 });

@@ -32,23 +32,15 @@ namespace Infrastructure.Configurations
 
         private static Task HandleExceptionAsync(HttpContext context, Exception exception)
         {
-            var statusCode = exception switch
+            var response = exception switch
             {
-                // add new exception types here
-                BadRequestException => 400,
-                NotFoundException => 404,
-                _ => 500                    // default
-            };
-
-            var response = new ErrorResponse
-            {
-                StatusCode = statusCode,
-                Message = exception.Message,
-                ExceptionType = exception.GetType().Name
+                BadRequestException => new ErrorResponse { StatusCode = 400, Message = exception.Message, ExceptionType = "BadRequestException" },
+                NotFoundException => new ErrorResponse { StatusCode = 404, Message = exception.Message, ExceptionType = "NotFoundException" },
+                _ => new ErrorResponse { StatusCode = 500, Message = "An unexpected error occurred.", ExceptionType = "InternalServerError" } // default
             };
 
             context.Response.ContentType = "application/json";
-            context.Response.StatusCode = statusCode;
+            context.Response.StatusCode = response.StatusCode;
             return context.Response.WriteAsJsonAsync(response);
         }
     }

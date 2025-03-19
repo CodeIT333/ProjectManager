@@ -24,7 +24,7 @@ namespace Application.Programmers
         public async Task<ProgrammerGetDTO> GetProgrammerAsync(Guid id)
         {
             var programmer = await _programmerRepo.GetProgrammerAsync(id);
-            if (programmer == null)
+            if (programmer is null)
                 throw new NotFoundException(ErrorMessages.NOT_FOUND_PROGRAMMER);
 
             return programmer.Adapt<ProgrammerGetDTO>();

@@ -22,10 +22,10 @@ INSERT INTO Projects (Id, ProjectManagerId, CustomerId, StartDate, Description) 
     ('f21685d0-ba2e-40ae-a0fb-4c6874a410cd', '21dd2bdc-42b7-4c9b-965a-f7e1a6255fc6', '8cb26438-0907-4d52-8df6-0506a7cbc9aa', '2024-03-10', 'Project Gamma');
 
 -- Insert Programmers
-INSERT INTO Programmers (Id, Name, DateOfBirth, Phone, Email, Role, IsIntern, Address_Country, Address_ZipCode, Address_County, Address_Settlement, Address_Street, Address_HouseNumber, Address_Door)
+INSERT INTO Programmers (Id, Name, DateOfBirth, Phone, Email, Role, IsIntern, ProjectManagerId, Address_Country, Address_ZipCode, Address_County, Address_Settlement, Address_Street, Address_HouseNumber, Address_Door)
 VALUES 
-    ('37a5af97-f1ef-4cb9-a9e0-93821d430a5d', 'John Doe', CAST('1990-05-15' AS DATE), '555-1234', 'john@example.com', 1, 0, 'USA', '10001', 'New York', 'New York City', '5th Avenue', '21A', '12'),
-    ('49da933b-18bc-4bdf-99e9-2cdb5eae1c10', 'Jane Smith', CAST('1995-08-20' AS DATE), '555-5678', 'jane@example.com', 2, 1, 'Canada', 'M5H 2N2', 'Ontario', 'Toronto', 'King Street', '99B', NULL );
+    ('37a5af97-f1ef-4cb9-a9e0-93821d430a5d', 'John Doe', CAST('1990-05-15' AS DATE), '555-1234', 'john@example.com', 1, 0, '21dd2bdc-42b7-4c9b-965a-f7e1a6255fc6', 'USA', '10001', 'New York', 'New York City', '5th Avenue', '21A', '12'),
+    ('49da933b-18bc-4bdf-99e9-2cdb5eae1c10', 'Jane Smith', CAST('1995-08-20' AS DATE), '555-5678', 'jane@example.com', 2, 1, '21dd2bdc-42b7-4c9b-965a-f7e1a6255fc6', 'Canada', 'M5H 2N2', 'Ontario', 'Toronto', 'King Street', '99B', NULL );
 
 -- Insert Programmer-Project Relations
 INSERT INTO ProgrammerProjects (ProgrammerId, ProjectId) VALUES
