@@ -71,7 +71,7 @@ namespace UnitTest.ProjectManagers
             var customer2 = new TestableCustomer("Tech Innovators", "06501234599", "project@techinn.com");
 
             var programmer1 = new TestableProgrammer("John Doe", "06201234567", "john@example.com", ProgrammerRole.FullStack, false);
-            var programmer2 = new TestableProgrammer("Jane Smith", "06207654321", "john@example.com", ProgrammerRole.Backend, true);
+            var programmer2 = new TestableProgrammer("Jane Smith", "06207654321", "jane@example.com", ProgrammerRole.Backend, true);
 
             var project1 = new TestableProject(
                 projectManager,
