@@ -21,7 +21,7 @@ namespace API.Controllers
         }
 
         [HttpGet]
-        [SwaggerResponse(200, Type = typeof(List<ProgrammerListDTO>))]
+        [SwaggerResponse(200, Type = typeof(List<ProgrammerListDTO>))] // or ProducesResponseType
         public async Task<ActionResult<List<ProgrammerListDTO>>> ListProgrammersAsync()
         {
             var data = await _programmerService.ListProgrammersAsync();
@@ -29,11 +29,8 @@ namespace API.Controllers
         }
 
         [HttpGet("{id}")]
-        [ProducesResponseType(typeof(ProgrammerGetDTO), 200)]
-        [ProducesResponseType(typeof(ErrorResponse), 400)] // Bad Request
-        [ProducesResponseType(typeof(ErrorResponse), 404)]
-        //[SwaggerResponse(200, Type = typeof(ProgrammerGetDTO))]
-        //[SwaggerResponse(404, ErrorMessages.NOT_FOUND_PROGRAMMER, typeof(NotFoundException))] // not found
+        [SwaggerResponse(200, Type = typeof(ProgrammerGetDTO))]
+        [SwaggerResponse(404, ErrorMessages.NOT_FOUND_PROGRAMMER, typeof(ErrorResponse))]
         public async Task<ActionResult<ProgrammerGetDTO>> GetProgrammerAsync(Guid id)
         {
             var data = await _programmerService.GetProgrammerAsync(id);
