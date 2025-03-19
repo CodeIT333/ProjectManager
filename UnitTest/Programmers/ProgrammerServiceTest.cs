@@ -1,8 +1,13 @@
 using Application.Programmers;
 using Domain.Programmers;
+using Domain.Projects;
 using FluentAssertions;
+using Infrastructure.Exceptions;
 using Moq;
 using UnitTest.Commons;
+using UnitTest.Customers;
+using UnitTest.ProjectManagers;
+using UnitTest.Projects;
 
 namespace UnitTest.Programmers
 {
@@ -24,7 +29,7 @@ namespace UnitTest.Programmers
             var mockData = new List<Programmer>
             {
                 new TestableProgrammer("John Doe", "06201234567", "john@example.com", ProgrammerRole.FullStack, false),
-                new TestableProgrammer("Jane Smith", "06207654321", "john@example.com", ProgrammerRole.Backend, true)
+                new TestableProgrammer("Jane Smith", "06207654321", "jane@example.com", ProgrammerRole.Backend, true)
             };
 
             _mockRepo.Setup(repo => repo.ListProgrammersAsync()).ReturnsAsync(mockData);
@@ -33,8 +38,18 @@ namespace UnitTest.Programmers
 
             result.Should().NotBeNull();
             result.Should().HaveCount(2);
+
             result[0].name.Should().Be("John Doe");
+            result[0].phone.Should().Be("06201234567");
+            result[0].email.Should().Be("john@example.com");
+            result[0].role.Should().Be(ProgrammerRole.FullStack);
+            result[0].isIntern.Should().BeFalse();
+
             result[1].name.Should().Be("Jane Smith");
+            result[1].phone.Should().Be("06207654321");
+            result[1].email.Should().Be("jane@example.com");
+            result[1].role.Should().Be(ProgrammerRole.Backend);
+            result[1].isIntern.Should().BeTrue();
         }
 
         [Fact]
@@ -47,6 +62,83 @@ namespace UnitTest.Programmers
             var result = await _service.ListProgrammersAsync();
 
             result.Should().BeEmpty();
+        }
+
+        [Fact]
+        public async Task GetProgrammerById_ReturnsProgrammerWithOneProjectAndWithoutProjectManager()
+        {
+            var programmer = new TestableProgrammer("John Doe", "06201234567", "john@example.com", ProgrammerRole.FullStack, false);
+            
+            var customerForProject = new TestableCustomer("Acme Corp", "06501234566", "project@acme.com");
+            
+            var projectManagerForProject = new TestableProjectManager("Alice Johnson", "06101234567", "alice@gmail.com");
+            
+            var project = new TestableProject(
+                projectManagerForProject,
+                customerForProject,
+                new List<TestableProgrammer> { programmer },
+                new DateOnly(2024, 3, 18),
+                "Project description 1"
+            );
+            
+            var programmerProject = new TestableProgrammerProject(programmer, project);
+            project.setProgrammerProjects(new List<ProgrammerProject> { programmerProject });
+
+            programmer.ProgrammerProjects.Add(programmerProject);
+
+            var mockData = programmer;
+
+            _mockRepo.Setup(repo => repo.GetProgrammerAsync(programmer.Id)).ReturnsAsync(mockData);
+
+            var result = await _service.GetProgrammerAsync(programmer.Id);
+            result.Should().NotBeNull();
+
+            result.name.Should().Be("John Doe");
+            result.phone.Should().Be("06201234567");
+            result.email.Should().Be("john@example.com");
+            result.role.Should().Be(ProgrammerRole.FullStack);
+            result.isIntern.Should().BeFalse();
+            result.projects.Should().HaveCount(1);
+            result.projectManagerName.Should().BeNull();
+            result.projects[0].projectManagerName.Should().Be("Alice Johnson");
+            result.projects[0].startDate.Should().Be(new DateOnly(2024, 3, 18));
+        }
+
+        [Fact]
+        public async Task GetProgrammerById_ReturnsProgrammerWithoutProjectAndWithProjectManager()
+        {
+            var projectManager = new TestableProjectManager("Alice Johnson", "06101234567", "alice@gmail.com");
+            var programmer = new TestableProgrammer("John Doe", "06201234567", "john@example.com", ProgrammerRole.FullStack, false, projectManager);
+
+            var mockData = programmer;
+
+            _mockRepo.Setup(repo => repo.GetProgrammerAsync(programmer.Id)).ReturnsAsync(mockData);
+
+            var result = await _service.GetProgrammerAsync(programmer.Id);
+            result.Should().NotBeNull();
+
+            result.name.Should().Be("John Doe");
+            result.phone.Should().Be("06201234567");
+            result.email.Should().Be("john@example.com");
+            result.role.Should().Be(ProgrammerRole.FullStack);
+            result.isIntern.Should().BeFalse();
+            result.projects.Should().HaveCount(0);
+            result.projectManagerName.Should().Be("Alice Johnson");
+        }
+
+        [Fact]
+        public async Task GetProgrammerByNotExistingProgrammerId_Returns404Error()
+        {
+            var notExistingId = Guid.NewGuid();
+            var mockData = (TestableProgrammer?)null;
+
+            _mockRepo.Setup(repo => repo.GetProgrammerAsync(notExistingId)).ReturnsAsync(mockData);
+
+            await FluentActions
+                .Invoking(() => _service.GetProgrammerAsync(notExistingId))
+                .Should()
+                .ThrowAsync<NotFoundException>()
+                .WithMessage(ErrorMessages.NOT_FOUND_PROGRAMMER);
         }
     }
 }
