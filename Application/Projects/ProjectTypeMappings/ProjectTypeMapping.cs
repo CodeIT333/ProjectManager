@@ -16,7 +16,8 @@ namespace Application.Projects.ProjectTypeMappings
                     projectManagerName = src.ProjectManager.Name,
                     customerName = src.Customer.Name,
                     programmerNames = src.ProgrammerProjects.Select(pp => pp.Programmer.Name).ToList(),
-                    startDate = src.StartDate
+                    startDate = src.StartDate,
+                    description = src.Description
                 });
 
             // Entity -> DTO
