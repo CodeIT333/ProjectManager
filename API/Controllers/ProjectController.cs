@@ -30,7 +30,7 @@ namespace API.Controllers
 
         [HttpGet("{id}")]
         [SwaggerResponse(200, Type = typeof(ProjectGetDTO))]
-        [SwaggerResponse(404, ErrorMessages.NOT_FOUND_PROJECT, typeof(ErrorResponse))]
+        [ProducesResponseType(typeof(ErrorResponse), 404)]
         public async Task<ActionResult<ProjectGetDTO>> GetProjectManagerAsync(Guid id)
         {
             var data = await _projectService.GetProjectAsync(id);

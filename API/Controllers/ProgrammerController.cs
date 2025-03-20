@@ -30,7 +30,7 @@ namespace API.Controllers
 
         [HttpGet("{id}")]
         [SwaggerResponse(200, Type = typeof(ProgrammerGetDTO))]
-        [SwaggerResponse(404, ErrorMessages.NOT_FOUND_PROGRAMMER, typeof(ErrorResponse))]
+        [ProducesResponseType(typeof(ErrorResponse), 404)]
         public async Task<ActionResult<ProgrammerGetDTO>> GetProgrammerAsync(Guid id)
         {
             var data = await _programmerService.GetProgrammerAsync(id);
