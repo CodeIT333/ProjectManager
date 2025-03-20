@@ -29,7 +29,7 @@ namespace API.Controllers
 
         [HttpGet("{id}")]
         [SwaggerResponse(200, Type = typeof(ProgrammerGetDTO))]
-        [ProducesResponseType(typeof(ErrorResponse), 404)]
+        [SwaggerResponse(404, Type = typeof(ErrorResponse))]
         public async Task<ActionResult<ProgrammerGetDTO>> GetProgrammerAsync(Guid id)
         {
             var data = await _programmerService.GetProgrammerAsync(id);
@@ -38,8 +38,8 @@ namespace API.Controllers
 
         [HttpPost]
         [SwaggerResponse(201)]
-        [ProducesResponseType(typeof(ErrorResponse), 400)]
-        [ProducesResponseType(typeof(ErrorResponse), 404)]
+        [SwaggerResponse(400, Type = typeof(ErrorResponse))]
+        [SwaggerResponse(404, Type = typeof(ErrorResponse))]
         public async Task<ActionResult> CreateProgrammerAsync([FromBody] ProgrammerCreateDTO dto)
         {
             await _programmerService.CreateProgrammerAsync(dto);

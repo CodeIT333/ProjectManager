@@ -22,6 +22,18 @@
         /*-----------------------------------------------ProjectManager--------------------------------------------*/
         public const string NOT_FOUND_PROJECT_MANAGER = "The project manager was not found.";
 
+        public const string REQUIRED_PROJECT_MANAGER_NAME = "The project manager name is required.";
+        public const string REQUIRED_PROJECT_MANAGER_EMAIL = "The project manager email is required.";
+        public const string REQUIRED_PROJECT_MANAGER_PHONE = "The project manager phone is required.";
+        public const string REQUIRED_PROJECT_MANAGER_ADDRESS = "The project manager address is required.";
+        public const string REQUIRED_PROJECT_MANAGER_DATE_OF_BIRTH = "The project manager date of birth is required.";
+
+        public const string TOO_LONG_PROJECT_MANAGER_NAME = "The project manager name is too long.";
+        public const string TOO_LONG_PROJECT_MANAGER_EMAIL = "The project manager email is too long.";
+        public const string TOO_LONG_PROJECT_MANAGER_PHONE = "The project manager phone is too long.";
+
+        public const string TAKEN_PROJECT_MANAGER_EMAIL = "The project manager email is already taken.";
+
         /*-----------------------------------------------Project--------------------------------------------*/
         public const string NOT_FOUND_PROJECT = "The project was not found.";
 

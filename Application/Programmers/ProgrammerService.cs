@@ -2,6 +2,7 @@
 using Application.Programmers.DTOs;
 using Application.Programmers.Specs;
 using Application.ProjectManagers;
+using Application.ProjectManagers.Specs;
 using Domain.Commons;
 using Domain.Programmers;
 using Domain.ProjectManagers;
@@ -44,8 +45,7 @@ namespace Application.Programmers
 
         public async Task CreateProgrammerAsync(ProgrammerCreateDTO dto)
         {
-            var existingProgrammer = await _programmerRepo.GetProgrammerAsync(new ProgrammerEmailSpec(dto.email));
-            if (existingProgrammer is not null)
+            if (await _programmerRepo.GetProgrammerAsync(new ProgrammerEmailSpec(dto.email)) is not null)
                 throw new BadRequestException(ErrorMessages.TAKEN_PROGRAMMER_EMAIL);
 
             var programmerAddress = Address.Create(
@@ -59,9 +59,9 @@ namespace Application.Programmers
             );
 
             ProjectManager programmerProjectManager = null;
-            if (dto.projectManagerId.HasValue && dto.projectManagerId.Value != Guid.Empty)
+            if (dto.projectManagerId is not null && dto.projectManagerId.HasValue && dto.projectManagerId.Value != Guid.Empty)
             {
-                programmerProjectManager = await _projectManagerRepo.GetProjectManagerAsync(dto.projectManagerId.Value);
+                programmerProjectManager = await _projectManagerRepo.GetProjectManagerAsync(new ProjectManagerIdSpec(dto.projectManagerId.Value));
                 if (programmerProjectManager is null)
                     throw new NotFoundException(ErrorMessages.NOT_FOUND_PROJECT_MANAGER);
             }

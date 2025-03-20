@@ -71,6 +71,20 @@ namespace Persistence
 
         private void ConfigureEntities(ModelBuilder modelBuilder)
         {
+            modelBuilder.Entity<ProjectManager>()
+                .Property(e => e.DateOfBirth)
+                .HasConversion(
+                    v => v.ToDateTime(TimeOnly.MinValue),
+                    v => DateOnly.FromDateTime(v)
+                );
+
+            modelBuilder.Entity<Programmer>()
+                .Property(e => e.DateOfBirth)
+                .HasConversion(
+                    v => v.ToDateTime(TimeOnly.MinValue),
+                    v => DateOnly.FromDateTime(v)
+                );
+
             modelBuilder.Entity<Programmer>().OwnsOne(p => p.Address);
 
             modelBuilder.Entity<ProjectManager>().OwnsOne(pm => pm.Address);

@@ -1,10 +1,12 @@
-﻿using Domain.ProjectManagers;
+﻿using Domain.Commons;
+using Domain.ProjectManagers;
 
 namespace Application.ProjectManagers
 {
     public interface IProjectManagerRepository
     {
         Task<List<ProjectManager>> ListProjectManagersAsync();
-        Task<ProjectManager?> GetProjectManagerAsync(Guid id);
+        Task<ProjectManager?> GetProjectManagerAsync(Specification<ProjectManager> spec);
+        Task CreateProjectManagerAsync(ProjectManager projectManager);
     }
 }
