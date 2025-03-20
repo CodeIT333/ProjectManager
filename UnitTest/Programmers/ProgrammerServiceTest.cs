@@ -1,5 +1,8 @@
 using Application.Commons;
+using Application.Commons.DTOs;
 using Application.Programmers;
+using Application.Programmers.DTOs;
+using Application.Programmers.Specs;
 using Application.ProjectManagers;
 using Domain.Commons;
 using Domain.Programmers;
@@ -164,6 +167,67 @@ namespace UnitTest.Programmers
                 .Should()
                 .ThrowAsync<NotFoundException>()
                 .WithMessage(ErrorMessages.NOT_FOUND_PROGRAMMER);
+        }
+
+        /*--------------------------------------------------------Create-------------------------------------------------------*/
+        [Theory]
+        [InlineData(false, false, false)] // success case
+        [InlineData(true, false, false)]  // email is already taken
+        [InlineData(false, true, false)]  // project manager not found
+        [InlineData(false, false, true)]  // success with valid Project Manager
+        public async Task CreateProgrammerAsync_HandlesDifferentScenarios(bool isEmailTaken, bool isPmNotFound, bool isPmValid)
+        {
+            var programmerEmail = "test@example.com";
+            var projectManagerId = isPmValid ? Guid.NewGuid() : (isPmNotFound ? Guid.NewGuid() : (Guid?)null);
+
+            var dto = new ProgrammerCreateDTO
+            {
+                name = "Test Programmer",
+                email = programmerEmail,
+                phone = "06201234567",
+                address = new AddressDTO
+                {
+                    country = "Hungary",
+                    zipCode = "6722",
+                    county = "Csongrád",
+                    settlement = "Szeged",
+                    street = "Kossuth Lajos sugárút",
+                    houseNumber = "15.",
+                    door = 1
+                },
+                dateOfBirth = new DateOnly(1995, 5, 21),
+                role = ProgrammerRole.FullStack,
+                isIntern = false,
+                projectManagerId = projectManagerId
+            };
+
+            _mockProgrammerRepo.Setup(repo => repo.GetProgrammerAsync(It.IsAny<ProgrammerEmailSpec>()))
+                .ReturnsAsync(isEmailTaken ? new TestableProgrammer("Existing", "06201234567", programmerEmail, ProgrammerRole.Backend, false) : null);
+
+            _mockProjectManagerRepo.Setup(repo => repo.GetProjectManagerAsync(It.IsAny<Guid>()))
+                .ReturnsAsync(isPmNotFound ? null : (isPmValid ? new TestableProjectManager("Project Manager", "06101234567", "pm@example.com") : null));
+
+            if (isEmailTaken)
+            {
+                await FluentActions.Invoking(() => _service.CreateProgrammerAsync(dto))
+                    .Should()
+                    .ThrowAsync<BadRequestException>()
+                    .WithMessage(ErrorMessages.TAKEN_PROGRAMMER_EMAIL);
+            }
+            else if (isPmNotFound)
+            {
+                await FluentActions.Invoking(() => _service.CreateProgrammerAsync(dto))
+                    .Should()
+                    .ThrowAsync<NotFoundException>()
+                    .WithMessage(ErrorMessages.NOT_FOUND_PROJECT_MANAGER);
+            }
+            else
+            {
+                await _service.CreateProgrammerAsync(dto);
+
+                _mockProgrammerRepo.Verify(repo => repo.CreateProgrammerAsync(It.IsAny<Programmer>()), Times.Once);
+                _mockUnitOfWork.Verify(uow => uow.CommitAsync(It.IsAny<CancellationToken>()), Times.Once);
+            }
         }
     }
 }
