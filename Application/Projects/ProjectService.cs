@@ -27,10 +27,7 @@ namespace Application.Projects
             if (project is null)
                 throw new NotFoundException(ErrorMessages.NOT_FOUND_PROJECT);
 
-            if (project.ProjectManager is null)
-                throw new NotFoundException(ErrorMessages.NOT_FOUND_PROJECT_MANAGER);
-
-            if (project.ProgrammerProjects.Any(pp => pp.Programmer is null))
+            if (!project.ProgrammerProjects.Any() || project.ProgrammerProjects.Any(pp => pp.Project is null))
                 throw new NotFoundException(ErrorMessages.NOT_FOUND_PROGRAMMER);
 
             return project.Adapt<ProjectGetDTO>();

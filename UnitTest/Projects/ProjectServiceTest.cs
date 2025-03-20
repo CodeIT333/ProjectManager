@@ -2,6 +2,7 @@
 using Domain.Programmers;
 using Domain.Projects;
 using FluentAssertions;
+using Infrastructure.Exceptions;
 using Moq;
 using UnitTest.Commons;
 using UnitTest.Configurations;
@@ -84,6 +85,89 @@ namespace UnitTest.Projects
             var result = await _service.ListProjectsAsync();
 
             result.Should().BeEmpty();
+        }
+
+        /*--------------------------------------------------------Get-------------------------------------------------------*/
+        [Fact]
+        public async Task GetProjectById_ReturnsProjectWithManagerCustomerAndProgrammers()
+        {
+            var projectManager = new TestableProjectManager("Alice Johnson", "06101234567", "alice@gmail.com");
+            var customer = new TestableCustomer("Acme Corp", "06501234566", "project@acme.com");
+
+            var programmer1 = new TestableProgrammer("John Doe", "06201234567", "john@example.com", ProgrammerRole.FullStack, false);
+            var programmer2 = new TestableProgrammer("Jane Smith", "06207654321", "jane@example.com", ProgrammerRole.Backend, true);
+
+            var project = new TestableProject(
+                projectManager,
+                customer,
+                new DateOnly(2024, 3, 18),
+                "Project description"
+            );
+
+            var programmerProject1 = new TestableProgrammerProject(programmer1, project);
+            var programmerProject2 = new TestableProgrammerProject(programmer2, project);
+            project.setProgrammerProjects(new List<ProgrammerProject> { programmerProject1, programmerProject2 });
+
+            _mockRepo.Setup(repo => repo.GetProjectAsync(project.Id)).ReturnsAsync(project);
+
+            var result = await _service.GetProjectAsync(project.Id);
+
+            result.Should().NotBeNull();
+            result.projectManager.projectManagerName.Should().Be("Alice Johnson");
+            result.projectManager.projectManagerEmail.Should().Be("alice@gmail.com");
+
+            result.startDate.Should().Be(new DateOnly(2024, 3, 18));
+            result.description.Should().Be("Project description");
+
+            result.customer.customerName.Should().Be("Acme Corp");
+            result.customer.customerPhone.Should().Be("06501234566");
+            result.customer.customerEmail.Should().Be("project@acme.com");
+
+            result.programmers.Should().HaveCount(2);
+            result.programmers[0].programmerName.Should().Be("John Doe");
+            result.programmers[0].programmerRole.Should().Be(ProgrammerRole.FullStack);
+            result.programmers[0].programmerIsIntern.Should().BeFalse();
+
+            result.programmers[1].programmerName.Should().Be("Jane Smith");
+            result.programmers[1].programmerRole.Should().Be(ProgrammerRole.Backend);
+            result.programmers[1].programmerIsIntern.Should().BeTrue();
+        }
+
+        [Fact]
+        public async Task GetProjectById_Returns404ProgrammerNotFoundError()
+        {
+            var projectManager = new TestableProjectManager("Alice Johnson", "06101234567", "alice@gmail.com");
+            var customer = new TestableCustomer("Acme Corp", "06501234566", "project@acme.com");
+
+            var project = new TestableProject(
+                projectManager,
+                customer,
+                new DateOnly(2024, 3, 18),
+                "Project without programmers"
+            );
+
+            _mockRepo.Setup(repo => repo.GetProjectAsync(project.Id)).ReturnsAsync(project);
+
+            await FluentActions
+                .Invoking(() => _service.GetProjectAsync(project.Id))
+                .Should()
+                .ThrowAsync<NotFoundException>()
+                .WithMessage(ErrorMessages.NOT_FOUND_PROGRAMMER);
+        }
+
+        [Fact]
+        public async Task GetProjectByNotExistingProjectId_Returns404ProjectError()
+        {
+            var notExistingId = Guid.NewGuid();
+            var mockData = (TestableProject?)null;
+
+            _mockRepo.Setup(repo => repo.GetProjectAsync(notExistingId)).ReturnsAsync(mockData);
+
+            await FluentActions
+                .Invoking(() => _service.GetProjectAsync(notExistingId))
+                .Should()
+                .ThrowAsync<NotFoundException>()
+                .WithMessage(ErrorMessages.NOT_FOUND_PROJECT);
         }
     }
 }

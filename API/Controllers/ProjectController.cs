@@ -30,8 +30,6 @@ namespace API.Controllers
 
         [HttpGet("{id}")]
         [SwaggerResponse(200, Type = typeof(ProjectGetDTO))]
-        [SwaggerResponse(404, ErrorMessages.NOT_FOUND_PROJECT_MANAGER, typeof(ErrorResponse))]
-        [SwaggerResponse(404, ErrorMessages.NOT_FOUND_PROGRAMMER, typeof(ErrorResponse))]
         [SwaggerResponse(404, ErrorMessages.NOT_FOUND_PROJECT, typeof(ErrorResponse))]
         public async Task<ActionResult<ProjectGetDTO>> GetProjectManagerAsync(Guid id)
         {

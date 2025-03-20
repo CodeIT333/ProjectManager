@@ -139,7 +139,7 @@ namespace UnitTest.Programmers
         }
 
         [Fact]
-        public async Task GetProgrammerByNotExistingProgrammerId_Returns404Error()
+        public async Task GetProgrammerByNotExistingProgrammerId_Returns404ProgrammerError()
         {
             var notExistingId = Guid.NewGuid();
             var mockData = (TestableProgrammer?)null;
