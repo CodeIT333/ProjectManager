@@ -1,4 +1,7 @@
+using Application.Commons;
 using Application.Programmers;
+using Application.ProjectManagers;
+using Domain.Commons;
 using Domain.Programmers;
 using Domain.Projects;
 using FluentAssertions;
@@ -13,14 +16,18 @@ namespace UnitTest.Programmers
 {
     public class ProgrammerServiceTest : Programmer
     {
-        private readonly Mock<IProgrammerRepository> _mockRepo; // for mocking the repository
+        private readonly Mock<IProjectManagerRepository> _mockProjectManagerRepo;
+        private readonly Mock<IProgrammerRepository> _mockProgrammerRepo; // for mocking the repository
+        private readonly Mock<IUnitOfWork> _mockUnitOfWork;
         private readonly ProgrammerService _service;  // inject the mock into the service
 
         public ProgrammerServiceTest()
         {
             TestMapsterConfig.Configure(); // init mapster
-            _mockRepo = new Mock<IProgrammerRepository>();
-            _service = new ProgrammerService(_mockRepo.Object);
+            _mockProjectManagerRepo = new Mock<IProjectManagerRepository>();
+            _mockProgrammerRepo = new Mock<IProgrammerRepository>();
+            _mockUnitOfWork = new Mock<IUnitOfWork>();
+            _service = new ProgrammerService(_mockProjectManagerRepo.Object, _mockProgrammerRepo.Object, _mockUnitOfWork.Object);
         }
 
         /*--------------------------------------------------------List-------------------------------------------------------*/
@@ -33,7 +40,7 @@ namespace UnitTest.Programmers
                 new TestableProgrammer("Jane Smith", "06207654321", "jane@example.com", ProgrammerRole.Backend, true)
             };
 
-            _mockRepo.Setup(repo => repo.ListProgrammersAsync()).ReturnsAsync(mockData);
+            _mockProgrammerRepo.Setup(repo => repo.ListProgrammersAsync()).ReturnsAsync(mockData);
 
             var result = await _service.ListProgrammersAsync();
 
@@ -58,7 +65,7 @@ namespace UnitTest.Programmers
         {
             var mockData = new List<Programmer>();
 
-            _mockRepo.Setup(repo => repo.ListProgrammersAsync()).ReturnsAsync(mockData);
+            _mockProgrammerRepo.Setup(repo => repo.ListProgrammersAsync()).ReturnsAsync(mockData);
 
             var result = await _service.ListProgrammersAsync();
 
@@ -89,8 +96,10 @@ namespace UnitTest.Programmers
             programmer.ProgrammerProjects.Add(programmerProject);
 
             var mockData = programmer;
+            var mockSpec = new Mock<ISpecification<Programmer>>();
+            mockSpec.Setup(spec => spec.ToExpressAll()).Returns(p => p.Id == programmer.Id);
 
-            _mockRepo.Setup(repo => repo.GetProgrammerAsync(programmer.Id)).ReturnsAsync(mockData);
+            _mockProgrammerRepo.Setup(repo => repo.GetProgrammerAsync(It.IsAny<Specification<Programmer>>())).ReturnsAsync(mockData);
 
             var result = await _service.GetProgrammerAsync(programmer.Id);
             result.Should().NotBeNull();
@@ -123,8 +132,10 @@ namespace UnitTest.Programmers
             var programmer = new TestableProgrammer("John Doe", "06201234567", "john@example.com", ProgrammerRole.FullStack, false, projectManager);
 
             var mockData = programmer;
+            var mockSpec = new Mock<ISpecification<Programmer>>();
+            mockSpec.Setup(spec => spec.ToExpressAll()).Returns(p => p.Id == programmer.Id);
 
-            _mockRepo.Setup(repo => repo.GetProgrammerAsync(programmer.Id)).ReturnsAsync(mockData);
+            _mockProgrammerRepo.Setup(repo => repo.GetProgrammerAsync(It.IsAny<Specification<Programmer>>())).ReturnsAsync(mockData);
 
             var result = await _service.GetProgrammerAsync(programmer.Id);
             result.Should().NotBeNull();
@@ -143,8 +154,10 @@ namespace UnitTest.Programmers
         {
             var notExistingId = Guid.NewGuid();
             var mockData = (TestableProgrammer?)null;
+            var mockSpec = new Mock<ISpecification<Programmer>>();
+            mockSpec.Setup(spec => spec.ToExpressAll()).Returns(p => p.Id == notExistingId);
 
-            _mockRepo.Setup(repo => repo.GetProgrammerAsync(notExistingId)).ReturnsAsync(mockData);
+            _mockProgrammerRepo.Setup(repo => repo.GetProgrammerAsync(It.IsAny<Specification<Programmer>>())).ReturnsAsync(mockData);
 
             await FluentActions
                 .Invoking(() => _service.GetProgrammerAsync(notExistingId))

@@ -7,6 +7,7 @@ namespace Application.Commons.DTOs.TypeMappings
     {
         public void Register(TypeAdapterConfig config)
         {
+            // Entity -> DTO
             config.NewConfig<Address, AddressDTO>()
                 .MapWith(src => new AddressDTO
                 {

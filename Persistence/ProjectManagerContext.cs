@@ -75,6 +75,10 @@ namespace Persistence
 
             modelBuilder.Entity<ProjectManager>().OwnsOne(pm => pm.Address);
 
+            modelBuilder.Entity<Programmer>().HasIndex(p => p.Email).IsUnique();
+            modelBuilder.Entity<ProjectManager>().HasIndex(p => p.Email).IsUnique();
+            modelBuilder.Entity<Customer>().HasIndex(p => p.Email).IsUnique();
+
             // programmer [1] - [Many] project
             modelBuilder.Entity<ProgrammerProject>()
                 .HasOne(pp => pp.Programmer)

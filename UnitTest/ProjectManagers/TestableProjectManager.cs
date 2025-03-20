@@ -14,7 +14,7 @@ namespace UnitTest.ProjectManagers
             Email = email;
         }
 
-        public TestableProjectManager(string name, string phone, string email, DateTime dateOfBirth, TestableAddress address)
+        public TestableProjectManager(string name, string phone, string email, DateOnly dateOfBirth, TestableAddress address)
         {
             Name = name;
             Phone = phone;

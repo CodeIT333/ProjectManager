@@ -15,7 +15,7 @@ namespace Domain.ProjectManagers
         [Required, MaxLength(20)]
         public string Phone { get; protected set; }
         public Address Address { get; protected set; }
-        public DateTime DateOfBirth { get; protected set; }
+        public DateOnly DateOfBirth { get; protected set; }
         public List<Project> Projects { get; protected set; } = [];
         public List<Programmer> Employees { get; protected set; } = [];
     }

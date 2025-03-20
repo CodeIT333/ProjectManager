@@ -10,7 +10,7 @@ namespace Application.Programmers.DTOs
         public string phone { get; set; }
         public string email { get; set; }
         public AddressDTO address { get; set; }
-        public DateTime dateOfBirth { get; set; }
+        public DateOnly dateOfBirth { get; set; }
         public List<ProjectInProgrammerGetDTO> projects { get; set; } = [];
         public Guid? projectManagerId { get; set; }
         public string? projectManagerName { get; set; }

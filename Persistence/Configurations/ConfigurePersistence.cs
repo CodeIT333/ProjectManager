@@ -1,4 +1,5 @@
-﻿using Application.Programmers;
+﻿using Application.Commons;
+using Application.Programmers;
 using Application.ProjectManagers;
 using Application.Projects;
 using Microsoft.EntityFrameworkCore;
@@ -22,6 +23,8 @@ namespace Persistence.Configurations
             services.AddScoped<IProgrammerRepository, ProgrammerRepository>();
             services.AddScoped<IProjectManagerRepository, ProjectManagerRepository>();
             services.AddScoped<IProjectRepository, ProjectRepository>();
+
+            services.AddScoped<IUnitOfWork, UnitOfWork>();
 
             return services;
         }

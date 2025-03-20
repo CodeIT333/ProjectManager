@@ -1,7 +1,6 @@
 ﻿using Application.Programmers;
 using Application.Programmers.DTOs;
 using Domain.Commons.Models;
-using Infrastructure.Exceptions;
 using Microsoft.AspNetCore.Mvc;
 using Swashbuckle.AspNetCore.Annotations;
 
@@ -35,6 +34,16 @@ namespace API.Controllers
         {
             var data = await _programmerService.GetProgrammerAsync(id);
             return Ok(data);
+        }
+
+        [HttpPost]
+        [SwaggerResponse(201)]
+        [ProducesResponseType(typeof(ErrorResponse), 400)]
+        [ProducesResponseType(typeof(ErrorResponse), 404)]
+        public async Task<ActionResult> CreateProgrammerAsync([FromBody] ProgrammerCreateDTO dto)
+        {
+            await _programmerService.CreateProgrammerAsync(dto);
+            return Ok();
         }
     }
 }
