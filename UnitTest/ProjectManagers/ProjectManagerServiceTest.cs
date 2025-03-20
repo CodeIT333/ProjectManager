@@ -65,7 +65,7 @@ namespace UnitTest.ProjectManagers
         public async Task GetProjectManagerById_ReturnsProjectManagerWithAddressAndProjectsAndWithoutEmployees()
         {
             var projectManagerAddress = new TestableAddress("Hungary", "6722", "Csongrád", "Szeged", "Kossuth Lajos sugárút", "15.", 1);
-            var projectManager = new TestableProjectManager("Alice Johnson", "06101234567", "alice@gmail.com", new DateTime(1990, 1, 1), projectManagerAddress);
+            var projectManager = new TestableProjectManager("Alice Johnson", "06101234567", "alice@gmail.com", new DateOnly(1990, 1, 1), projectManagerAddress);
 
             var customer1 = new TestableCustomer("Acme Corp", "06501234566", "project@acme.com");
             var customer2 = new TestableCustomer("Tech Innovators", "06501234599", "project@techinn.com");
@@ -105,7 +105,7 @@ namespace UnitTest.ProjectManagers
             result.name.Should().Be("Alice Johnson");
             result.phone.Should().Be("06101234567");
             result.email.Should().Be("alice@gmail.com");
-            result.dateOfBirth.Should().Be(new DateTime(1990, 1, 1));
+            result.dateOfBirth.Should().Be(new DateOnly(1990, 1, 1));
             result.projects.Should().HaveCount(2);
             result.projects[0].customerName.Should().Be("Acme Corp");
             result.projects[0].customerPhone.Should().Be("06501234566");

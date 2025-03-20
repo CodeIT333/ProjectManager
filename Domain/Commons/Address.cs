@@ -29,5 +29,27 @@ namespace Domain.Commons
             yield return HouseNumber;
             if (Door != null) yield return Door;
         }
+
+        public static Address Create(
+            string country,
+            string zipCode,
+            string county,
+            string settlement,
+            string street,
+            string houseNumber,
+            int? door
+            )
+        {
+            return new Address
+            {
+                Country = country.Trim(),
+                ZipCode = zipCode.Trim(),
+                County = county.Trim(),
+                Settlement = settlement.Trim(),
+                Street = street.Trim(),
+                HouseNumber = houseNumber.Trim(),
+                Door = door,
+            };
+        }
     }
 }

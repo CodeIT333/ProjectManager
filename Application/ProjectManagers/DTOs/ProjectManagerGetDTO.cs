@@ -11,7 +11,7 @@ namespace Application.ProjectManagers.DTOs
         public string email { get; set; }
         public string phone { get; set; }
         public AddressDTO address { get; set; }
-        public DateTime dateOfBirth { get; set; }
+        public DateOnly dateOfBirth { get; set; }
         public List<ProjectInProjectManagerGetDTO> projects { get; set; }
         public List<ProgrammerInProjectManagerDTO> employees { get; set; }
     }
