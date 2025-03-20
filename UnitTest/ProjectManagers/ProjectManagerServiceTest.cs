@@ -151,7 +151,7 @@ namespace UnitTest.ProjectManagers
         }
 
         [Fact]
-        public async Task GetProjectManagerByNotExistingProjectManagerId_Returns404Error()
+        public async Task GetProjectManagerByNotExistingProjectManagerId_Returns404ProjectManagerError()
         {
             var notExistingId = Guid.NewGuid();
             var mockData = (TestableProjectManager?)null;

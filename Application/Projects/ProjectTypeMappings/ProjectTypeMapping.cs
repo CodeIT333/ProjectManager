@@ -1,4 +1,7 @@
-﻿using Application.Projects.DTOs;
+﻿using Application.Commons.DTOs;
+using Application.Programmers.DTOs;
+using Application.ProjectManagers.DTOs;
+using Application.Projects.DTOs;
 using Domain.Projects;
 using Mapster;
 
@@ -39,6 +42,18 @@ namespace Application.Projects.ProjectTypeMappings
                     customerName = src.Customer.Name,
                     customerPhone = src.Customer.Phone,
                     customerEmail = src.Customer.Email
+                });
+
+            // Entity -> DTO
+            config.NewConfig<Project, ProjectGetDTO>()
+                .MapWith(src => new ProjectGetDTO
+                {
+                    id = src.Id,
+                    programmers = src.ProgrammerProjects.Select(pp => pp.Programmer).Adapt<List<ProgrammerInProjectDTO>>(),
+                    projectManager = src.ProjectManager.Adapt<ProjectManagerInProgrammerDTO>(),
+                    customer = src.Customer.Adapt<CustomerDTO>(),
+                    startDate = src.StartDate,
+                    description = src.Description
                 });
         }
     }
