@@ -41,6 +41,15 @@ namespace Application.ProjectManagers.ProjectManagerTypeMappings
                     projects = src.Projects.Adapt<List<ProjectInProjectManagerGetDTO>>(),
                     employees = src.Employees.Adapt<List<ProgrammerInProjectManagerDTO>>(),
                 });
+
+            // Entity -> DTO
+            config.NewConfig<ProjectManager, ProjectManagerInProgrammerDTO>()
+                .MapWith(src => new ProjectManagerInProgrammerDTO
+                {
+                    projectManagerId = src.Id,
+                    projectManagerName = src.Name,
+                    projectManagerEmail = src.Email,
+                });
         }
     }
 }

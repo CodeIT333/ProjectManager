@@ -18,5 +18,11 @@ namespace Persistence.Repositories.Projects
             .Include(p => p.Customer)
             .Include(p => p.ProgrammerProjects).ThenInclude(pp => pp.Programmer)
             .ToListAsync();
+
+        public async Task<Project?> GetProjectAsync(Guid id) => await _dbContext.Projects
+            .Include(p => p.ProgrammerProjects).ThenInclude(pp => pp.Programmer)
+            .Include(p => p.ProjectManager)
+            .Include(p => p.Customer)
+            .SingleOrDefaultAsync(p => p.Id == id);
     }
 }

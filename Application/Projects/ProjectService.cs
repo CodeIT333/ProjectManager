@@ -1,4 +1,5 @@
 ﻿using Application.Projects.DTOs;
+using Infrastructure.Exceptions;
 using Mapster;
 
 namespace Application.Projects
@@ -16,8 +17,23 @@ namespace Application.Projects
 
         public async Task<List<ProjectListDTO>> ListProjectsAsync()
         {
-            var data = await _projectRepo.ListProjectsAsync();
-            return data.Adapt<List<ProjectListDTO>>();
+            var projects = await _projectRepo.ListProjectsAsync();
+            return projects.Adapt<List<ProjectListDTO>>();
+        }
+
+        public async Task<ProjectGetDTO> GetProjectAsync(Guid id)
+        {
+            var project = await _projectRepo.GetProjectAsync(id);
+            if (project is null)
+                throw new NotFoundException(ErrorMessages.NOT_FOUND_PROJECT);
+
+            if (project.ProjectManager is null)
+                throw new NotFoundException(ErrorMessages.NOT_FOUND_PROJECT_MANAGER);
+
+            if (project.ProgrammerProjects.Any(pp => pp.Programmer is null))
+                throw new NotFoundException(ErrorMessages.NOT_FOUND_PROGRAMMER);
+
+            return project.Adapt<ProjectGetDTO>();
         }
     }
 }
