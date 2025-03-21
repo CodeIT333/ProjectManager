@@ -4,6 +4,7 @@ using Application.Programmers;
 using Application.Programmers.DTOs;
 using Application.Programmers.Specs;
 using Application.ProjectManagers;
+using Application.ProjectManagers.Specs;
 using Domain.Commons;
 using Domain.Programmers;
 using Domain.Projects;
@@ -43,7 +44,7 @@ namespace UnitTest.Programmers
                 new TestableProgrammer("Jane Smith", "06207654321", "jane@example.com", ProgrammerRole.Backend, true)
             };
 
-            _mockProgrammerRepo.Setup(repo => repo.ListProgrammersAsync()).ReturnsAsync(mockData);
+            _mockProgrammerRepo.Setup(repo => repo.ListProgrammersAsync(It.IsAny<Specification<Programmer>>())).ReturnsAsync(mockData);
 
             var result = await _service.ListProgrammersAsync();
 
@@ -68,7 +69,7 @@ namespace UnitTest.Programmers
         {
             var mockData = new List<Programmer>();
 
-            _mockProgrammerRepo.Setup(repo => repo.ListProgrammersAsync()).ReturnsAsync(mockData);
+            _mockProgrammerRepo.Setup(repo => repo.ListProgrammersAsync(It.IsAny<Specification<Programmer>>())).ReturnsAsync(mockData);
 
             var result = await _service.ListProgrammersAsync();
 
@@ -204,8 +205,8 @@ namespace UnitTest.Programmers
             _mockProgrammerRepo.Setup(repo => repo.GetProgrammerAsync(It.IsAny<ProgrammerEmailSpec>()))
                 .ReturnsAsync(isEmailTaken ? new TestableProgrammer("Existing", "06201234567", programmerEmail, ProgrammerRole.Backend, false) : null);
 
-            _mockProjectManagerRepo.Setup(repo => repo.GetProjectManagerAsync(It.IsAny<Guid>()))
-                .ReturnsAsync(isPmNotFound ? null : (isPmValid ? new TestableProjectManager("Project Manager", "06101234567", "pm@example.com") : null));
+            _mockProjectManagerRepo.Setup(repo => repo.GetProjectManagerAsync(It.IsAny<ProjectManagerIdSpec>()))
+                .ReturnsAsync(isPmNotFound ? null : (isPmValid ? new TestableProjectManager("Alice Johnson", "06101234567", "alice@gmail.com") : null));
 
             if (isEmailTaken)
             {

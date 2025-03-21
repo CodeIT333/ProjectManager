@@ -13,7 +13,7 @@ namespace Persistence.Repositories.Programmers
             _dbContext = dbContext;
         }
 
-        public async Task<List<Programmer>> ListProgrammersAsync(Specification<Programmer> spec = null) => 
+        public async Task<List<Programmer>> ListProgrammersAsync(Specification<Programmer>? spec = null) => 
             await _dbContext.Programmers.AsQueryable().Where(spec?.ToExpressAll() ?? (p => true)).ToListAsync();
 
         public async Task<Programmer?> GetProgrammerAsync(Specification<Programmer> spec) => await _dbContext.Programmers
