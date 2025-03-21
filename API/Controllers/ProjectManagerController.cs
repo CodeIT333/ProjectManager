@@ -1,7 +1,6 @@
 ﻿using Application.ProjectManagers;
 using Application.ProjectManagers.DTOs;
 using Domain.Commons.Models;
-using Infrastructure.Exceptions;
 using Microsoft.AspNetCore.Mvc;
 using Swashbuckle.AspNetCore.Annotations;
 

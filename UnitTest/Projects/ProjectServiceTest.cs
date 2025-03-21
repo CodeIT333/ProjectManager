@@ -1,4 +1,8 @@
-﻿using Application.Projects;
+﻿using Application.Commons;
+using Application.Customers;
+using Application.Programmers;
+using Application.ProjectManagers;
+using Application.Projects;
 using Domain.Programmers;
 using Domain.Projects;
 using FluentAssertions;
@@ -13,14 +17,29 @@ namespace UnitTest.Projects
 {
     public class ProjectServiceTest
     {
-        private readonly Mock<IProjectRepository> _mockRepo;
+        private readonly Mock<IProgrammerProjectRepository> _mockProgrammerProjectRepo;
+        private readonly Mock<IProjectManagerRepository> _mockProjectManagerRepo;
+        private readonly Mock<IProgrammerRepository> _mockProgrammerRepo;
+        private readonly Mock<ICustomerRepository> _mockCustomerRepo;
+        private readonly Mock<IProjectRepository> _mockProjectRepo;
+        private readonly Mock<IUnitOfWork> _mockUnitOfWork;
         private readonly ProjectService _service;
 
         public ProjectServiceTest()
         {
             TestMapsterConfig.Configure();
-            _mockRepo = new Mock<IProjectRepository>();
-            _service = new ProjectService(_mockRepo.Object);
+            _mockProgrammerProjectRepo = new Mock<IProgrammerProjectRepository>();
+            _mockProjectManagerRepo = new Mock<IProjectManagerRepository>();
+            _mockProgrammerRepo = new Mock<IProgrammerRepository>();
+            _mockCustomerRepo = new Mock<ICustomerRepository>();
+            _mockProjectRepo = new Mock<IProjectRepository>();
+            _service = new ProjectService(
+                _mockProgrammerProjectRepo.Object, 
+                _mockProjectManagerRepo.Object,
+                _mockProgrammerRepo.Object,
+                _mockCustomerRepo.Object,
+                _mockProjectRepo.Object, 
+                _mockUnitOfWork.Object);
         }
 
         /*--------------------------------------------------------List-------------------------------------------------------*/
@@ -58,7 +77,7 @@ namespace UnitTest.Projects
 
             var mockData = new List<Project> { project1, project2 };
 
-            _mockRepo.Setup(repo => repo.ListProjectsAsync()).ReturnsAsync(mockData);
+            _mockProjectRepo.Setup(repo => repo.ListProjectsAsync()).ReturnsAsync(mockData);
 
             var result = await _service.ListProjectsAsync();
 
@@ -80,7 +99,7 @@ namespace UnitTest.Projects
         {
             var mockData = new List<Project>();
 
-            _mockRepo.Setup(repo => repo.ListProjectsAsync()).ReturnsAsync(mockData);
+            _mockProjectRepo.Setup(repo => repo.ListProjectsAsync()).ReturnsAsync(mockData);
 
             var result = await _service.ListProjectsAsync();
 
@@ -108,7 +127,7 @@ namespace UnitTest.Projects
             var programmerProject2 = new TestableProgrammerProject(programmer2, project);
             project.setProgrammerProjects(new List<ProgrammerProject> { programmerProject1, programmerProject2 });
 
-            _mockRepo.Setup(repo => repo.GetProjectAsync(project.Id)).ReturnsAsync(project);
+            _mockProjectRepo.Setup(repo => repo.GetProjectAsync(project.Id)).ReturnsAsync(project);
 
             var result = await _service.GetProjectAsync(project.Id);
 
@@ -146,7 +165,7 @@ namespace UnitTest.Projects
                 "Project without programmers"
             );
 
-            _mockRepo.Setup(repo => repo.GetProjectAsync(project.Id)).ReturnsAsync(project);
+            _mockProjectRepo.Setup(repo => repo.GetProjectAsync(project.Id)).ReturnsAsync(project);
 
             await FluentActions
                 .Invoking(() => _service.GetProjectAsync(project.Id))
@@ -161,7 +180,7 @@ namespace UnitTest.Projects
             var notExistingId = Guid.NewGuid();
             var mockData = (TestableProject?)null;
 
-            _mockRepo.Setup(repo => repo.GetProjectAsync(notExistingId)).ReturnsAsync(mockData);
+            _mockProjectRepo.Setup(repo => repo.GetProjectAsync(notExistingId)).ReturnsAsync(mockData);
 
             await FluentActions
                 .Invoking(() => _service.GetProjectAsync(notExistingId))

@@ -1,7 +1,6 @@
 ﻿using Application.Projects;
 using Application.Projects.DTOs;
 using Domain.Commons.Models;
-using Infrastructure.Exceptions;
 using Microsoft.AspNetCore.Mvc;
 using Swashbuckle.AspNetCore.Annotations;
 
@@ -35,6 +34,15 @@ namespace API.Controllers
         {
             var data = await _projectService.GetProjectAsync(id);
             return Ok(data);
+        }
+
+        [HttpPost]
+        [SwaggerResponse(201)]
+        [SwaggerResponse(404, Type = typeof(ErrorResponse))]
+        public async Task<IActionResult> CreateProjectAsync(ProjectCreateDTO dto)
+        {
+            await _projectService.CreateProjectAsync(dto);
+            return Ok();
         }
     }
 }

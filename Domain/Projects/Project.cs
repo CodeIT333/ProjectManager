@@ -13,5 +13,23 @@ namespace Domain.Projects
         public Customer Customer { get; protected set; }
         public DateOnly StartDate { get; protected set; }
         public string Description { get; protected set; }
+
+        public static Project Create(
+            ProjectManager projectManager,
+            Customer customer,
+            string description
+        )
+        {
+            return new Project
+            {
+                Id = Guid.NewGuid(),
+                ProjectManager = projectManager,
+                ProjectManagerId = projectManager.Id,
+                Customer = customer,
+                CustomerId = customer.Id,
+                StartDate = DateOnly.FromDateTime(DateTime.UtcNow),
+                Description = description
+            };
+        }
     }
 }
