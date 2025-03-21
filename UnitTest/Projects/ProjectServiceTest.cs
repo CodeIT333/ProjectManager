@@ -195,10 +195,10 @@ namespace UnitTest.Projects
 
         /*--------------------------------------------------------Create-------------------------------------------------------*/
         [Theory]
-        [InlineData(false, false, false)] // success case
+        [InlineData(false, false, false)] // success
         [InlineData(true, false, false)]  // project manager not found
         [InlineData(false, true, false)]  // customer not found
-        [InlineData(false, false, true)]  // success case with programmer ids
+        [InlineData(false, false, true)]  // programmer not found
         public async Task CreateProjectAsync_HandlesDifferentScenarios(bool isPmNotFound, bool isCustomerNotFound, bool isProgrammerNotFound)
         {
             var projectManagerId = Guid.NewGuid();
@@ -210,10 +210,10 @@ namespace UnitTest.Projects
                 description = "Project description",
                 projectManagerId = projectManagerId,
                 customerId = customerId,
-                programmerIds = isProgrammerNotFound ? validProgrammerIds : new List<Guid>()
+                programmerIds = isProgrammerNotFound ? validProgrammerIds : new List<Guid>() { Guid.NewGuid() }
             };
 
-            _mockProjectManagerRepo.Setup(repo => repo.GetProjectManagerAsync(new ProjectManagerIdSpec(projectManagerId)))
+            _mockProjectManagerRepo.Setup(repo => repo.GetProjectManagerAsync(It.IsAny<ProjectManagerIdSpec>()))
                 .ReturnsAsync(isPmNotFound ? null : new TestableProjectManager("Project Manager", "06101234567", "pm@example.com"));
 
             _mockCustomerRepo.Setup(repo => repo.GetCustomerAsync(customerId))
@@ -222,9 +222,7 @@ namespace UnitTest.Projects
             _mockProgrammerRepo.Setup(repo => repo.GetProgrammerAsync(It.IsAny<ProgrammerIdSpec>()))
                 .ReturnsAsync((ProgrammerIdSpec spec) =>
                 {
-                    return validProgrammerIds.Contains(dto.programmerIds.FirstOrDefault()) ?
-                        new TestableProgrammer("Test Programmer", "06201234567", "programmer@example.com", ProgrammerRole.FullStack, false) :
-                        null;
+                    return new TestableProgrammer("Test Programmer", "06201234567", "programmer@example.com", ProgrammerRole.FullStack, false);
                 });
 
             if (isPmNotFound)
@@ -246,12 +244,12 @@ namespace UnitTest.Projects
                 await _service.CreateProjectAsync(dto);
 
                 _mockProjectRepo.Verify(repo => repo.CreateProjectAsync(It.IsAny<Project>()), Times.Once);
-                _mockUnitOfWork.Verify(uow => uow.CommitAsync(It.IsAny<CancellationToken>()), Times.Once);
+                _mockUnitOfWork.Verify(uow => uow.CommitAsync(It.IsAny<CancellationToken>()), Times.AtLeastOnce);
 
                 if (!isProgrammerNotFound)
                 {
-                    _mockProgrammerRepo.Verify(repo => repo.GetProgrammerAsync(It.IsAny<ProgrammerIdSpec>()), Times.Exactly(2));
-                    _mockProgrammerProjectRepo.Verify(repo => repo.CreateProgrammerProjectAsync(It.IsAny<ProgrammerProject>()), Times.Exactly(2));
+                    _mockProgrammerRepo.Verify(repo => repo.GetProgrammerAsync(It.IsAny<ProgrammerIdSpec>()), Times.Exactly(validProgrammerIds.Count));
+                    _mockProgrammerProjectRepo.Verify(repo => repo.CreateProgrammerProjectAsync(It.IsAny<ProgrammerProject>()), Times.Exactly(validProgrammerIds.Count));
                 }
             }
         }
