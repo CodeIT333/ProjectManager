@@ -18,5 +18,26 @@ namespace Domain.ProjectManagers
         public DateOnly DateOfBirth { get; protected set; }
         public List<Project> Projects { get; protected set; } = [];
         public List<Programmer> Employees { get; protected set; } = [];
+
+        public static ProjectManager Create(
+            string name,
+            string email,
+            string phone,
+            Address address,
+            DateOnly dateOfBirth,
+            List<Programmer>? employees
+            )
+        {
+            return new ProjectManager
+            {
+                Id = Guid.NewGuid(),
+                Name = name,
+                Email = email,
+                Phone = phone,
+                Address = address,
+                DateOfBirth = dateOfBirth,
+                Employees = employees ?? []
+            };
+        }
     }
 }
