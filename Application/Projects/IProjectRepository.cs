@@ -6,5 +6,6 @@ namespace Application.Projects
     {
         Task<List<Project>> ListProjectsAsync();
         Task<Project?> GetProjectAsync(Guid id);
+        Task CreateProjectAsync(Project project);
     }
 }

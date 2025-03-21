@@ -37,6 +37,9 @@
         /*-----------------------------------------------Project--------------------------------------------*/
         public const string NOT_FOUND_PROJECT = "The project was not found.";
 
+        /*-----------------------------------------------Customer--------------------------------------------*/
+        public const string NOT_FOUND_CUSTOMER = "The customer was not found.";
+
         /*-----------------------------------------------Address--------------------------------------------*/
         public const string REQUIRED_ADDRESS_COUNTRY = "The address country is required.";
         public const string REQUIRED_ADDRESS_ZIP_CODE = "The address zip code is required.";

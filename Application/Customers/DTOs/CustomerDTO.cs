@@ -1,4 +1,4 @@
-﻿namespace Application.Commons.DTOs
+﻿namespace Application.Customers.DTOs
 {
     public class CustomerDTO
     {

@@ -185,8 +185,7 @@ namespace UnitTest.ProjectManagers
         {
             var projectManagerEmail = "pm@example.com";
             var projectManagerId = Guid.NewGuid();
-            var existingProgrammerId = Guid.NewGuid();
-            var validProgrammerIds = new List<Guid> { existingProgrammerId };
+            var validProgrammerIds = new List<Guid> { Guid.NewGuid() };
 
             var dto = new ProjectManagerCreateDTO
             {
@@ -204,7 +203,7 @@ namespace UnitTest.ProjectManagers
                     door = 1
                 },
                 dateOfBirth = new DateOnly(1980, 8, 15),
-                employees = isProgrammerNotFound ? new List<Guid> { Guid.NewGuid() } : validProgrammerIds
+                employeeIds = isProgrammerNotFound ? new List<Guid> { Guid.NewGuid() } : validProgrammerIds
             };
 
             // mock another pm with same email
@@ -217,7 +216,7 @@ namespace UnitTest.ProjectManagers
             _mockProgrammerRepo.Setup(repo => repo.GetProgrammerAsync(It.IsAny<ProgrammerIdSpec>()))
                 .ReturnsAsync((ProgrammerIdSpec spec) =>
                 {
-                    return validProgrammerIds.Contains(dto.employees.FirstOrDefault()) ?
+                    return validProgrammerIds.Contains(dto.employeeIds.FirstOrDefault()) ?
                         new TestableProgrammer("Test Programmer", "06201234567", "programmer@example.com", ProgrammerRole.FullStack, false) :
                         null;
                 });

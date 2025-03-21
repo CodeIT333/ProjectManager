@@ -60,11 +60,11 @@ namespace Application.ProjectManagers
             );
 
             List<Programmer> programmers = new();
-            if (dto.employees is not null && dto.employees.Any())
+            if (dto.employeeIds is not null && dto.employeeIds.Any())
             {
-                foreach (var employee in dto.employees)
+                foreach (var employeeId in dto.employeeIds)
                 {
-                    var programmer = await _programmerRepo.GetProgrammerAsync(new ProgrammerIdSpec(employee));
+                    var programmer = await _programmerRepo.GetProgrammerAsync(new ProgrammerIdSpec(employeeId));
                     if (programmer is null)
                         throw new NotFoundException(ErrorMessages.NOT_FOUND_PROGRAMMER);
 
