@@ -181,7 +181,7 @@ namespace UnitTest.Programmers
             var programmerEmail = "test@example.com";
             var projectManagerId = isPmValid ? Guid.NewGuid() : (isPmNotFound ? Guid.NewGuid() : (Guid?)null);
 
-            var dto = new ProgrammerCreateDTO
+            var dto = new ProgrammerCreateUpdateDTO
             {
                 name = "Test Programmer",
                 email = programmerEmail,

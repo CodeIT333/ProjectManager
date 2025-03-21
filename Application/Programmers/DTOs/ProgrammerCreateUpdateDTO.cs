@@ -5,7 +5,7 @@ using System.ComponentModel.DataAnnotations;
 
 namespace Application.Programmers.DTOs
 {
-    public class ProgrammerCreateDTO
+    public class ProgrammerCreateUpdateDTO
     {
         [Required(ErrorMessage = ErrorMessages.REQUIRED_PROGRAMMER_NAME)]
         [MaxLength(200, ErrorMessage = ErrorMessages.TOO_LONG_PROGRAMMER_NAME)]

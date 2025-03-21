@@ -40,10 +40,20 @@ namespace API.Controllers
         [SwaggerResponse(201)]
         [SwaggerResponse(400, Type = typeof(ErrorResponse))]
         [SwaggerResponse(404, Type = typeof(ErrorResponse))]
-        public async Task<ActionResult> CreateProgrammerAsync([FromBody] ProgrammerCreateDTO dto)
+        public async Task<ActionResult> CreateProgrammerAsync([FromBody] ProgrammerCreateUpdateDTO dto)
         {
             await _programmerService.CreateProgrammerAsync(dto);
             return Ok();
+        }
+
+        [HttpPut("{id}")]
+        [SwaggerResponse(204)]
+        [SwaggerResponse(400, Type = typeof(ErrorResponse))]
+        [SwaggerResponse(404, Type = typeof(ErrorResponse))]
+        public async Task<ActionResult> UpdateProgrammerAsync(Guid id, [FromBody] ProgrammerCreateUpdateDTO dto)
+        {
+            await _programmerService.UpdateProgrammerAsync(id, dto);
+            return NoContent();
         }
     }
 }

@@ -51,5 +51,24 @@ namespace Domain.Commons
                 Door = door,
             };
         }
+
+        public void Update(
+            string country,
+            string zipCode,
+            string county,
+            string settlement,
+            string street,
+            string houseNumber,
+            int? door
+            )
+        {
+            if (Country != country.Trim()) Country = country.Trim();
+            if (ZipCode != zipCode.Trim()) ZipCode = zipCode.Trim();
+            if (County != county.Trim()) County = county.Trim();
+            if (Settlement != settlement.Trim()) Settlement = settlement.Trim();
+            if (Street != street.Trim()) Street = street.Trim();
+            if (HouseNumber != houseNumber.Trim()) HouseNumber = houseNumber.Trim();
+            if (Door != door) Door = door;
+        }
     }
 }
