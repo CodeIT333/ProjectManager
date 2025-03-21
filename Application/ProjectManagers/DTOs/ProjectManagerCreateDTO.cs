@@ -19,6 +19,6 @@ namespace Application.ProjectManagers.DTOs
         public AddressDTO address { get; set; }
         [Required(ErrorMessage = ErrorMessages.REQUIRED_PROJECT_MANAGER_DATE_OF_BIRTH)]
         public DateOnly dateOfBirth { get; set; }
-        public List<Guid>? employees { get; set; }
+        public List<Guid>? employeeIds { get; set; }
     }
 }

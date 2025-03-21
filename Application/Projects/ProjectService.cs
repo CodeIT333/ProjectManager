@@ -1,4 +1,12 @@
-﻿using Application.Projects.DTOs;
+﻿using Application.Commons;
+using Application.Customers;
+using Application.Programmers;
+using Application.Programmers.Specs;
+using Application.ProjectManagers;
+using Application.ProjectManagers.Specs;
+using Application.Projects.DTOs;
+using Domain.Programmers;
+using Domain.Projects;
 using Infrastructure.Exceptions;
 using Mapster;
 
@@ -6,13 +14,28 @@ namespace Application.Projects
 {
     public class ProjectService
     {
+        private readonly IProgrammerProjectRepository _programmerProjectRepo;
+        private readonly IProjectManagerRepository _projectManagerRepos;
+        private readonly IProgrammerRepository _programmerRepo;
+        private readonly ICustomerRepository _customerRepo;
         private readonly IProjectRepository _projectRepo;
+        private readonly IUnitOfWork _uow;
 
         public ProjectService(
-            IProjectRepository projectRepo
+            IProgrammerProjectRepository programmerProjectRepo,
+            IProjectManagerRepository projectManagerRepo,
+            IProgrammerRepository programmerRepo,
+            ICustomerRepository customerRepo,
+            IProjectRepository projectRepo,
+            IUnitOfWork uow
             )
         {
+            _programmerProjectRepo = programmerProjectRepo;
+            _projectManagerRepos = projectManagerRepo;
+            _programmerRepo = programmerRepo;
+            _customerRepo = customerRepo;
             _projectRepo = projectRepo;
+            _uow = uow;
         }
 
         public async Task<List<ProjectListDTO>> ListProjectsAsync()
@@ -31,6 +54,47 @@ namespace Application.Projects
                 throw new NotFoundException(ErrorMessages.NOT_FOUND_PROGRAMMER);
 
             return project.Adapt<ProjectGetDTO>();
+        }
+
+        public async Task CreateProjectAsync(ProjectCreateDTO dto)
+        {
+            var projectManager = await _projectManagerRepos.GetProjectManagerAsync(new ProjectManagerIdSpec(dto.projectManagerId));
+            if (projectManager is null)
+                throw new NotFoundException(ErrorMessages.NOT_FOUND_PROJECT_MANAGER);
+
+            var customer = await _customerRepo.GetCustomerAsync(dto.customerId);
+            if (customer is null)
+                throw new NotFoundException(ErrorMessages.NOT_FOUND_CUSTOMER);
+
+            List<Programmer> programmers = new();
+            if (dto.programmerIds is not null && dto.programmerIds.Any())
+            {
+                foreach (var programmerId in dto.programmerIds)
+                {
+                    var programmer = await _programmerRepo.GetProgrammerAsync(new ProgrammerIdSpec(programmerId));
+                    if (programmer is null)
+                        throw new NotFoundException(ErrorMessages.NOT_FOUND_PROGRAMMER);
+
+                    programmers.Add(programmer);
+                }
+            }
+
+            var project = Project.Create(projectManager, customer, dto.description);
+            await _projectRepo.CreateProjectAsync(project);
+            await _uow.CommitAsync();
+
+            List<ProgrammerProject> programmerProjects = new();
+            foreach (var programmer in programmers)
+            {
+                var programmerProject = ProgrammerProject.Create(project, programmer);
+                await _programmerProjectRepo.CreateProgrammerProjectAsync(programmerProject);
+                await _uow.CommitAsync();
+
+                programmer.ProgrammerProjects.Add(programmerProject);
+            }
+
+            project.ProgrammerProjects.AddRange(programmerProjects);
+            await _uow.CommitAsync();
         }
     }
 }

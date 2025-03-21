@@ -24,5 +24,7 @@ namespace Persistence.Repositories.Projects
             .Include(p => p.ProjectManager)
             .Include(p => p.Customer)
             .SingleOrDefaultAsync(p => p.Id == id);
+
+        public async Task CreateProjectAsync(Project project) => await _dbContext.Projects.AddAsync(project);
     }
 }

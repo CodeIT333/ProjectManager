@@ -1,4 +1,4 @@
-﻿using Application.Commons.DTOs;
+﻿using Application.Customers.DTOs;
 
 namespace Application.Projects.DTOs
 {

@@ -1,7 +1,8 @@
-﻿using Domain.Customers;
+﻿using Application.Customers.DTOs;
+using Domain.Customers;
 using Mapster;
 
-namespace Application.Commons.DTOs.TypeMappings
+namespace Application.Customers.CustomerTypeMappings
 {
     public class CustomerTypeMapping : IRegister
     {
