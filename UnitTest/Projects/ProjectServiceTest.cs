@@ -1,8 +1,11 @@
 ﻿using Application.Commons;
 using Application.Customers;
 using Application.Programmers;
+using Application.Programmers.Specs;
 using Application.ProjectManagers;
+using Application.ProjectManagers.Specs;
 using Application.Projects;
+using Application.Projects.DTOs;
 using Domain.Programmers;
 using Domain.Projects;
 using FluentAssertions;
@@ -33,6 +36,7 @@ namespace UnitTest.Projects
             _mockProgrammerRepo = new Mock<IProgrammerRepository>();
             _mockCustomerRepo = new Mock<ICustomerRepository>();
             _mockProjectRepo = new Mock<IProjectRepository>();
+            _mockUnitOfWork = new Mock<IUnitOfWork>();
             _service = new ProjectService(
                 _mockProgrammerProjectRepo.Object, 
                 _mockProjectManagerRepo.Object,
@@ -187,6 +191,69 @@ namespace UnitTest.Projects
                 .Should()
                 .ThrowAsync<NotFoundException>()
                 .WithMessage(ErrorMessages.NOT_FOUND_PROJECT);
+        }
+
+        /*--------------------------------------------------------Create-------------------------------------------------------*/
+        [Theory]
+        [InlineData(false, false, false)] // success case
+        [InlineData(true, false, false)]  // project manager not found
+        [InlineData(false, true, false)]  // customer not found
+        [InlineData(false, false, true)]  // success case with programmer ids
+        public async Task CreateProjectAsync_HandlesDifferentScenarios(bool isPmNotFound, bool isCustomerNotFound, bool isProgrammerNotFound)
+        {
+            var projectManagerId = Guid.NewGuid();
+            var customerId = Guid.NewGuid();
+            var validProgrammerIds = new List<Guid> { Guid.NewGuid() };
+
+            var dto = new ProjectCreateDTO
+            {
+                description = "Project description",
+                projectManagerId = projectManagerId,
+                customerId = customerId,
+                programmerIds = isProgrammerNotFound ? validProgrammerIds : new List<Guid>()
+            };
+
+            _mockProjectManagerRepo.Setup(repo => repo.GetProjectManagerAsync(new ProjectManagerIdSpec(projectManagerId)))
+                .ReturnsAsync(isPmNotFound ? null : new TestableProjectManager("Project Manager", "06101234567", "pm@example.com"));
+
+            _mockCustomerRepo.Setup(repo => repo.GetCustomerAsync(customerId))
+                .ReturnsAsync(isCustomerNotFound ? null : new TestableCustomer("Customer Name", "06501234567", "customer@example.com"));
+
+            _mockProgrammerRepo.Setup(repo => repo.GetProgrammerAsync(It.IsAny<ProgrammerIdSpec>()))
+                .ReturnsAsync((ProgrammerIdSpec spec) =>
+                {
+                    return validProgrammerIds.Contains(dto.programmerIds.FirstOrDefault()) ?
+                        new TestableProgrammer("Test Programmer", "06201234567", "programmer@example.com", ProgrammerRole.FullStack, false) :
+                        null;
+                });
+
+            if (isPmNotFound)
+            {
+                await FluentActions.Invoking(() => _service.CreateProjectAsync(dto))
+                    .Should()
+                    .ThrowAsync<NotFoundException>()
+                    .WithMessage(ErrorMessages.NOT_FOUND_PROJECT_MANAGER);
+            }
+            else if (isCustomerNotFound)
+            {
+                await FluentActions.Invoking(() => _service.CreateProjectAsync(dto))
+                    .Should()
+                    .ThrowAsync<NotFoundException>()
+                    .WithMessage(ErrorMessages.NOT_FOUND_CUSTOMER);
+            }
+            else
+            {
+                await _service.CreateProjectAsync(dto);
+
+                _mockProjectRepo.Verify(repo => repo.CreateProjectAsync(It.IsAny<Project>()), Times.Once);
+                _mockUnitOfWork.Verify(uow => uow.CommitAsync(It.IsAny<CancellationToken>()), Times.Once);
+
+                if (!isProgrammerNotFound)
+                {
+                    _mockProgrammerRepo.Verify(repo => repo.GetProgrammerAsync(It.IsAny<ProgrammerIdSpec>()), Times.Exactly(2));
+                    _mockProgrammerProjectRepo.Verify(repo => repo.CreateProgrammerProjectAsync(It.IsAny<ProgrammerProject>()), Times.Exactly(2));
+                }
+            }
         }
     }
 }

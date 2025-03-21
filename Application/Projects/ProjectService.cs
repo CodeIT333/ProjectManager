@@ -88,6 +88,9 @@ namespace Application.Projects
             {
                 var programmerProject = ProgrammerProject.Create(project, programmer);
                 await _programmerProjectRepo.CreateProgrammerProjectAsync(programmerProject);
+                await _uow.CommitAsync();
+
+                programmer.ProgrammerProjects.Add(programmerProject);
             }
 
             project.ProgrammerProjects.AddRange(programmerProjects);

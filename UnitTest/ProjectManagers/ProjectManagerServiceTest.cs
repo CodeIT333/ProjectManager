@@ -185,8 +185,7 @@ namespace UnitTest.ProjectManagers
         {
             var projectManagerEmail = "pm@example.com";
             var projectManagerId = Guid.NewGuid();
-            var existingProgrammerId = Guid.NewGuid();
-            var validProgrammerIds = new List<Guid> { existingProgrammerId };
+            var validProgrammerIds = new List<Guid> { Guid.NewGuid() };
 
             var dto = new ProjectManagerCreateDTO
             {
