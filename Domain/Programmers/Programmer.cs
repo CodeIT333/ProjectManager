@@ -46,5 +46,27 @@ namespace Domain.Programmers
                 ProjectManagerId = manager?.Id
             };
         }
+
+        public void Update(
+            string name,
+            string email,
+            string phone,
+            DateOnly dateOfBirth,
+            ProgrammerRole role,
+            bool isIntern,
+            ProjectManager? manager)
+        {
+            if (manager is not null && (ProjectManager is null || ProjectManager != manager))
+            {
+                ProjectManager = manager;
+                ProjectManagerId = manager.Id;
+            }
+            if (Name != name) Name = name;
+            if (Email != email) Email = email;
+            if (Phone != phone) Phone = phone;
+            if (DateOfBirth != dateOfBirth) DateOfBirth = dateOfBirth;
+            if (Role != role) Role = role;
+            if (IsIntern != isIntern) IsIntern = isIntern;
+        }
     }
 }
