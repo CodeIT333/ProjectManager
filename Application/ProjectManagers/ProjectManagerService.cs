@@ -3,6 +3,7 @@ using Application.Programmers;
 using Application.Programmers.Specs;
 using Application.ProjectManagers.DTOs;
 using Application.ProjectManagers.Specs;
+using Application.Projects;
 using Domain.Commons;
 using Domain.Programmers;
 using Domain.ProjectManagers;
@@ -15,16 +16,19 @@ namespace Application.ProjectManagers
     {
         private readonly IProjectManagerRepository _projectManagerRepo;
         private readonly IProgrammerRepository _programmerRepo;
+        private readonly IProjectRepository _projectRepo;
         private readonly IUnitOfWork _uow;
 
         public ProjectManagerService(
             IProjectManagerRepository projectManagerRepo,
             IProgrammerRepository programmerRepo,
+            IProjectRepository projectRepo,
             IUnitOfWork uow
             )
         {
             _projectManagerRepo = projectManagerRepo;
             _programmerRepo = programmerRepo;
+            _projectRepo = projectRepo;
             _uow = uow;
         }
 
@@ -82,6 +86,70 @@ namespace Application.ProjectManagers
             );
 
             await _projectManagerRepo.CreateProjectManagerAsync(projectManager);
+            await _uow.CommitAsync();
+        }
+
+        public async Task UpdateProjectManagerAsync(Guid id, ProjectManagerUpdateDTO dto)
+        {
+            var projectManager = await _projectManagerRepo.GetProjectManagerAsync(new ProjectManagerIdSpec(id));
+            if (projectManager is null)
+                throw new NotFoundException(ErrorMessages.NOT_FOUND_PROJECT_MANAGER);
+
+            projectManager.Address.Update(
+                dto.address.country,
+                dto.address.zipCode,
+                dto.address.county,
+                dto.address.settlement,
+                dto.address.street,
+                dto.address.houseNumber,
+                dto.address.door
+            );
+
+            List<Programmer> programmers = null;
+            if (dto.employeeIds is not null && dto.employeeIds.Any())
+            {
+                foreach (var employeeId in dto.employeeIds)
+                {
+                    var programmer = await _programmerRepo.GetProgrammerAsync(new ProgrammerIdSpec(employeeId));
+                    if (programmer is null)
+                        throw new NotFoundException(ErrorMessages.NOT_FOUND_PROGRAMMER);
+
+                    programmers.Add(programmer);
+                    programmer.UpdateProjectManager(projectManager);
+                }
+            }
+            // TODO more programmers | less programmers
+            if (programmers is not null)
+            {
+                // add
+                var programmersToAdd = programmers.Except(projectManager.Employees).ToList();
+                programmersToAdd.ForEach(p => p.UpdateProjectManager(projectManager));
+
+                projectManager.Employees.AddRange(programmersToAdd);
+
+                // remove
+                var programmersToRemove = projectManager.Employees.Except(programmers).ToList();
+                programmersToRemove.ForEach(p => p.UpdateProjectManager(null));
+
+                projectManager.Employees.RemoveAll(p => programmersToRemove.Contains(p));
+            }
+            else
+            {
+                // remove this pm from the connected programmers
+                projectManager.Employees.ForEach(p => p.UpdateProjectManager(null));
+                // remove all programmer from this pm
+                projectManager.Employees.Clear();
+            }
+
+
+            projectManager.Update(
+                dto.name,
+                dto.email,
+                dto.phone,
+                dto.dateOfBirth,
+                programmers
+            );
+
             await _uow.CommitAsync();
         }
     }

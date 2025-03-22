@@ -115,8 +115,21 @@ namespace Application.Programmers
                 dto.isIntern, 
                 programmerProjectManager);
 
+            // add
             if (programmerProjectManager is not null)
-                programmerProjectManager.Employees.Add(programmer);
+            {
+                // new pm for this programmer
+                if (programmer.ProjectManagerId != programmerProjectManager.Id)
+                    programmerProjectManager.Employees.Add(programmer);
+            }
+            // remove
+            else
+            {
+                // is there any pm who has this programmer but the dto does not contains this pm's id
+                var projectManagerWhoHasThisProgrammer = await _projectManagerRepo.GetProjectManagerAsync(new ProjectManagerIdSpec(programmer.ProjectManager!.Id));
+                if (projectManagerWhoHasThisProgrammer is not null)
+                    projectManagerWhoHasThisProgrammer.Employees.Remove(programmer);
+            }
 
             await _uow.CommitAsync();
         }

@@ -45,5 +45,15 @@ namespace API.Controllers
             await _projectManagerService.CreateProjectManagerAsync(dto);
             return Ok();
         }
+
+        [HttpPut("{id}")]
+        [SwaggerResponse(204)]
+        [SwaggerResponse(400, Type = typeof(ErrorResponse))]
+        [SwaggerResponse(404, Type = typeof(ErrorResponse))]
+        public async Task<IActionResult> UpdateProjectManagerAsync(Guid id, ProjectManagerUpdateDTO dto)
+        {
+            await _projectManagerService.UpdateProjectManagerAsync(id, dto);
+            return NoContent();
+        }
     }
 }
