@@ -98,12 +98,22 @@ namespace Application.Programmers
                 dto.address.door
             );
 
-            ProjectManager programmerProjectManager = null;
+            // check if the added pm id is valid
+            ProjectManager newProgrammerProjectManager = null;
             if (dto.projectManagerId is not null && dto.projectManagerId.HasValue && dto.projectManagerId.Value != Guid.Empty)
             {
-                programmerProjectManager = await _projectManagerRepo.GetProjectManagerAsync(new ProjectManagerIdSpec(dto.projectManagerId.Value));
-                if (programmerProjectManager is null)
+                newProgrammerProjectManager = await _projectManagerRepo.GetProjectManagerAsync(new ProjectManagerIdSpec(dto.projectManagerId.Value));
+                if (newProgrammerProjectManager is null)
                     throw new NotFoundException(ErrorMessages.NOT_FOUND_PROJECT_MANAGER);
+            }
+
+            // if the new is not the same as the previous pm, remove the programmer from the previous pm employee list
+            if (newProgrammerProjectManager is not null && programmer.ProjectManagerId != newProgrammerProjectManager.Id)
+            {
+                if (programmer.ProjectManager is not null)
+                    programmer.ProjectManager.Employees.Remove(programmer);
+
+                newProgrammerProjectManager.Employees.Add(programmer);
             }
 
             programmer.Update(
@@ -113,23 +123,7 @@ namespace Application.Programmers
                 dto.dateOfBirth, 
                 dto.role, 
                 dto.isIntern, 
-                programmerProjectManager);
-
-            // add
-            if (programmerProjectManager is not null)
-            {
-                // new pm for this programmer
-                if (programmer.ProjectManagerId != programmerProjectManager.Id)
-                    programmerProjectManager.Employees.Add(programmer);
-            }
-            // remove
-            else
-            {
-                // is there any pm who has this programmer but the dto does not contains this pm's id
-                var projectManagerWhoHasThisProgrammer = await _projectManagerRepo.GetProjectManagerAsync(new ProjectManagerIdSpec(programmer.ProjectManager!.Id));
-                if (projectManagerWhoHasThisProgrammer is not null)
-                    projectManagerWhoHasThisProgrammer.Employees.Remove(programmer);
-            }
+                newProgrammerProjectManager);
 
             await _uow.CommitAsync();
         }

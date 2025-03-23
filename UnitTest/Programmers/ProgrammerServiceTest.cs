@@ -7,6 +7,7 @@ using Application.ProjectManagers;
 using Application.ProjectManagers.Specs;
 using Domain.Commons;
 using Domain.Programmers;
+using Domain.ProjectManagers;
 using Domain.Projects;
 using FluentAssertions;
 using Infrastructure.Exceptions;
@@ -233,17 +234,23 @@ namespace UnitTest.Programmers
 
         /*--------------------------------------------------------Update-------------------------------------------------------*/
         [Theory]
-        [InlineData(false, false, false, false)] // success without pm
-        [InlineData(true, false, false, false)]  // email is taken
-        [InlineData(false, true, false, false)]  // programmer not found
-        [InlineData(false, false, true, false)]  // pm not found
-        [InlineData(false, false, false, true)]  // success with pm
-        public async Task UpdateProgrammerAsync_HandlesDifferentScenarios(bool isEmailTaken, bool isProgrammerNotFound, bool isPmNotFound, bool isPmValid)
+        [InlineData(false, false, false, false, false)] // success without pm
+        [InlineData(true, false, false, false, false)]  // email is taken
+        [InlineData(false, true, false, false, false)]  // programmer not found
+        [InlineData(false, false, true, false, false)]  // pm not found
+        [InlineData(false, false, false, true, false)]  // success with new pm
+        [InlineData(false, false, false, false, true)]  // success, keeping previous pm
+        public async Task UpdateProgrammerAsync_HandlesDifferentScenarios(bool isEmailTaken, bool isProgrammerNotFound, bool isPmNotFound, bool isPmValid, bool hadPreviousPm)
         {
             var programmerId = Guid.NewGuid();
             var existingEmail = "existing@example.com";
             var newEmail = "new@example.com";
-
+            var previousProjectManager = hadPreviousPm
+                ? new TestableProjectManager("Previous PM", "06101234567", "prevpm@example.com")
+                : null;
+            var newProjectManager = isPmNotFound
+                ? null
+                : (isPmValid ? new TestableProjectManager("New PM", "06102345678", "newpm@example.com") : null);
             var existingProgrammer = isProgrammerNotFound
                 ? null
                 : new TestableProgrammer("Test Programmer", "06201234567", existingEmail, ProgrammerRole.FullStack, false, 
@@ -267,25 +274,31 @@ namespace UnitTest.Programmers
                 dateOfBirth = new DateOnly(1992, 8, 14),
                 role = ProgrammerRole.Backend,
                 isIntern = true,
-                projectManagerId = isPmValid ? Guid.NewGuid() : (isPmNotFound ? Guid.NewGuid() : (Guid?)null)
+                projectManagerId = newProjectManager?.Id
             };
 
-            var existingEmailProgrammer = isEmailTaken ? new TestableProgrammer("Existing Programmer", "06209876543", newEmail, ProgrammerRole.Frontend, false) : null;
-            
-            var projectManager = isPmNotFound ? null : (isPmValid ? new TestableProjectManager("Project Manager", "06101234567", "pm@example.com") : null);
+            var existingEmailProgrammer = isEmailTaken 
+                ? new TestableProgrammer("Existing Programmer", "06209876543", newEmail, ProgrammerRole.Frontend, false) 
+                : null;
 
-            _mockProgrammerRepo.Setup(repo => repo.GetProgrammerAsync(It.IsAny<ProgrammerIdSpec>()))
-                .ReturnsAsync(existingProgrammer);
+            _mockProgrammerRepo.Setup(repo => repo.GetProgrammerAsync(It.IsAny<ProgrammerIdSpec>())).ReturnsAsync(existingProgrammer);
 
             if (existingProgrammer is not null && dto.email != existingProgrammer.Email)
+                _mockProgrammerRepo.Setup(repo => repo.GetProgrammerAsync(It.IsAny<ProgrammerEmailSpec>())).ReturnsAsync(existingEmailProgrammer);
+
+            if (isPmNotFound)
             {
-                _mockProgrammerRepo.Setup(repo => repo.GetProgrammerAsync(It.IsAny<ProgrammerEmailSpec>()))
-                    .ReturnsAsync(existingEmailProgrammer);
+                _mockProjectManagerRepo.Setup(repo => repo.GetProjectManagerAsync(It.IsAny<ProjectManagerIdSpec>())).ReturnsAsync((ProjectManager)null);
+            }
+            else if (isPmValid)
+            {
+                _mockProjectManagerRepo.Setup(repo => repo.GetProjectManagerAsync(It.IsAny<ProjectManagerIdSpec>())).ReturnsAsync(newProjectManager);
             }
 
-            _mockProjectManagerRepo.Setup(repo => repo.GetProjectManagerAsync(It.IsAny<ProjectManagerIdSpec>()))
-                .ReturnsAsync(projectManager);
-
+            if (hadPreviousPm)
+            {
+                _mockProjectManagerRepo.Setup(repo => repo.GetProjectManagerAsync(It.IsAny<ProjectManagerIdSpec>())).ReturnsAsync(previousProjectManager);
+            }
             if (isProgrammerNotFound)
             {
                 await FluentActions.Invoking(() => _service.UpdateProgrammerAsync(programmerId, dto))
@@ -313,13 +326,22 @@ namespace UnitTest.Programmers
 
                 _mockProgrammerRepo.Verify(repo => repo.GetProgrammerAsync(It.IsAny<ProgrammerIdSpec>()), Times.Once);
                 if (existingProgrammer is not null && dto.email != existingProgrammer.Email)
-                {
                     _mockProgrammerRepo.Verify(repo => repo.GetProgrammerAsync(It.IsAny<ProgrammerEmailSpec>()), Times.Once);
-                }
                 else
-                {
                     _mockProgrammerRepo.Verify(repo => repo.GetProgrammerAsync(It.IsAny<ProgrammerEmailSpec>()), Times.Never);
+
+                if (hadPreviousPm && previousProjectManager?.Id != newProjectManager?.Id)
+                {
+                    _mockProjectManagerRepo.Verify(repo => repo.GetProjectManagerAsync(It.IsAny<ProjectManagerIdSpec>()), Times.Once);
+                    //previousProjectManager!.Employees.Should().NotContain(existingProgrammer);
                 }
+
+                if (isPmValid)
+                {
+                    _mockProjectManagerRepo.Verify(repo => repo.GetProjectManagerAsync(It.IsAny<ProjectManagerIdSpec>()), Times.Once);
+                    //newProjectManager!.Employees.Should().Contain(existingProgrammer);
+                }
+
                 _mockUnitOfWork.Verify(uow => uow.CommitAsync(It.IsAny<CancellationToken>()), Times.Once);
             }
         }

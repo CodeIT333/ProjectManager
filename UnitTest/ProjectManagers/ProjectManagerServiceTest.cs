@@ -5,6 +5,7 @@ using Application.Programmers.Specs;
 using Application.ProjectManagers;
 using Application.ProjectManagers.DTOs;
 using Application.ProjectManagers.Specs;
+using Application.Projects;
 using Domain.Commons;
 using Domain.Programmers;
 using Domain.ProjectManagers;
@@ -23,6 +24,7 @@ namespace UnitTest.ProjectManagers
     {
         private readonly Mock<IProjectManagerRepository> _mockProjectManagerRepo;
         private readonly Mock<IProgrammerRepository> _mockProgrammerRepo;
+        private readonly Mock<IProjectRepository> _mockProjectRepo;
         private readonly Mock<IUnitOfWork> _mockUnitOfWork;
         private readonly ProjectManagerService _service;
 
@@ -31,8 +33,13 @@ namespace UnitTest.ProjectManagers
             TestMapsterConfig.Configure();
             _mockProjectManagerRepo = new Mock<IProjectManagerRepository>();
             _mockProgrammerRepo = new Mock<IProgrammerRepository>();
+            _mockProjectRepo = new Mock<IProjectRepository>();
             _mockUnitOfWork = new Mock<IUnitOfWork>();
-            _service = new ProjectManagerService(_mockProjectManagerRepo.Object, _mockProgrammerRepo.Object, _mockUnitOfWork.Object);
+            _service = new ProjectManagerService(
+                _mockProjectManagerRepo.Object, 
+                _mockProgrammerRepo.Object, 
+                _mockProjectRepo.Object, 
+                _mockUnitOfWork.Object);
         }
 
         /*--------------------------------------------------------List-------------------------------------------------------*/

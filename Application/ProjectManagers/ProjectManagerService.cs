@@ -105,7 +105,7 @@ namespace Application.ProjectManagers
                 dto.address.door
             );
 
-            List<Programmer> programmers = null;
+            List<Programmer> programmers = new();
             if (dto.employeeIds is not null && dto.employeeIds.Any())
             {
                 foreach (var employeeId in dto.employeeIds)
@@ -118,29 +118,28 @@ namespace Application.ProjectManagers
                     programmer.UpdateProjectManager(projectManager);
                 }
             }
-            // TODO more programmers | less programmers
-            if (programmers is not null)
+
+            if (programmers.Any())
             {
                 // add
                 var programmersToAdd = programmers.Except(projectManager.Employees).ToList();
-                programmersToAdd.ForEach(p => p.UpdateProjectManager(projectManager));
-
                 projectManager.Employees.AddRange(programmersToAdd);
+
+                programmersToAdd.ForEach(p => p.UpdateProjectManager(projectManager));
 
                 // remove
                 var programmersToRemove = projectManager.Employees.Except(programmers).ToList();
                 programmersToRemove.ForEach(p => p.UpdateProjectManager(null));
 
-                projectManager.Employees.RemoveAll(p => programmersToRemove.Contains(p));
+                projectManager.Employees.RemoveAll(p => programmersToRemove.Contains(p));   
             }
             else
             {
                 // remove this pm from the connected programmers
                 projectManager.Employees.ForEach(p => p.UpdateProjectManager(null));
-                // remove all programmer from this pm
+                // remove all programmers from this pm
                 projectManager.Employees.Clear();
             }
-
 
             projectManager.Update(
                 dto.name,
