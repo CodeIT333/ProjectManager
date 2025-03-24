@@ -9,6 +9,7 @@ namespace UnitTest.ProjectManagers
     {
         public TestableProjectManager(string name, string phone, string email)
         {
+            Id = Guid.NewGuid();
             Name = name;
             Phone = phone;
             Email = email;
@@ -16,6 +17,7 @@ namespace UnitTest.ProjectManagers
 
         public TestableProjectManager(string name, string phone, string email, DateOnly dateOfBirth, TestableAddress address)
         {
+            Id = Guid.NewGuid();
             Name = name;
             Phone = phone;
             Email = email;

@@ -8,6 +8,7 @@ namespace UnitTest.Projects
     {
         public TestableProject(ProjectManager manager, Customer customer, DateOnly startDate, string description)
         {
+            Id = Guid.NewGuid();
             ProjectManagerId = manager.Id;
             ProjectManager = manager;
             CustomerId = customer.Id;

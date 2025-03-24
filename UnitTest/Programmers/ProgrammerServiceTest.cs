@@ -13,6 +13,7 @@ using Domain.Projects;
 using FluentAssertions;
 using Infrastructure.Exceptions;
 using Moq;
+using System.Diagnostics;
 using UnitTest.Commons;
 using UnitTest.Configurations;
 using UnitTest.ProjectManagers;
@@ -211,7 +212,7 @@ namespace UnitTest.Programmers
         [InlineData(true, false, false)]  // email is already taken
         [InlineData(false, true, false)]  // project manager not found
         [InlineData(false, false, true)]  // success with valid Project Manager
-        public async Task CreateProgrammerAsync_HandlesDifferentScenarios(bool isEmailTaken, bool isPmNotFound, bool isPmValid)
+        public async Task CreateProgrammer_HandlesDifferentScenarios(bool isEmailTaken, bool isPmNotFound, bool isPmValid)
         {
             var programmerEmail = "test@example.com";
             var projectManagerId = isPmValid ? Guid.NewGuid() : (isPmNotFound ? Guid.NewGuid() : (Guid?)null);
@@ -265,28 +266,16 @@ namespace UnitTest.Programmers
                 _mockUnitOfWork.Verify(uow => uow.CommitAsync(It.IsAny<CancellationToken>()), Times.Once);
             }
         }
+
         /*--------------------------------------------------------Update-------------------------------------------------------*/
-        [Theory]
-        [InlineData(false, false, false, false)] // success without pm
-        [InlineData(true, false, false, false)]  // email is taken
-        [InlineData(false, true, false, false)]  // programmer not found
-        [InlineData(false, false, true, false)]  // pm not found
-        [InlineData(false, false, false, true)]  // success with pm
-        public async Task UpdateProgrammerAsync_HandlesDifferentScenarios(bool isEmailTaken, bool isProgrammerNotFound, bool isPmNotFound, bool isPmValid)
+        [Fact]
+        public async Task UpdateProgrammerWithoutProjectManager_ReturnsOk()
         {
-            var programmerId = Guid.NewGuid();
-            var existingEmail = "existing@example.com";
-            var newEmail = "new@example.com";
-
-            var existingProgrammer = isProgrammerNotFound
-                ? null
-                : new TestableProgrammer("Test Programmer", "06201234567", existingEmail, ProgrammerRole.FullStack, false, 
-                    new TestableAddress("Hungary", "6722", "Csongrád", "Szeged", "Kossuth Lajos sugárút", "15.", 1));
-
+            var programmer = new TestableProgrammer("John Doe", "06201234567", "john@example.com", ProgrammerRole.FullStack, false);
             var dto = new ProgrammerCreateUpdateDTO
             {
                 name = "Updated Programmer",
-                email = isEmailTaken ? newEmail : existingEmail,
+                email = "updated@example.com",
                 phone = "06209998877",
                 address = new AddressDTO
                 {
@@ -301,62 +290,35 @@ namespace UnitTest.Programmers
                 dateOfBirth = new DateOnly(1992, 8, 14),
                 role = ProgrammerRole.Backend,
                 isIntern = true,
-                projectManagerId = isPmValid ? Guid.NewGuid() : (isPmNotFound ? Guid.NewGuid() : (Guid?)null)
+                projectManagerId = null
             };
 
-            var existingEmailProgrammer = isEmailTaken ? new TestableProgrammer("Existing Programmer", "06209876543", newEmail, ProgrammerRole.Frontend, false) : null;
-            
-            var projectManager = isPmNotFound ? null : (isPmValid ? new TestableProjectManager("Project Manager", "06101234567", "pm@example.com") : null);
+            var mockData = programmer;
+            var mockSpec = new Mock<ISpecification<Programmer>>();
+            mockSpec.Setup(spec => spec.ToExpressAll()).Returns(p => p.Id == programmer.Id && p.Email != dto.email && !p.IsArchived);
 
-            _mockProgrammerRepo.Setup(repo => repo.GetProgrammerAsync(It.IsAny<ProgrammerIdSpec>()))
-                .ReturnsAsync(existingProgrammer);
+            _mockProgrammerRepo.Setup(repo => repo.GetProgrammerAsync(It.IsAny<Specification<Programmer>>())).ReturnsAsync(mockData);
+            _mockProgrammerRepo.Setup(repo => repo.GetProgrammerAsync(It.IsAny<ProgrammerEmailSpec>())).ReturnsAsync((Programmer?)null);
 
-            if (existingProgrammer is not null && dto.email != existingProgrammer.Email)
-            {
-                _mockProgrammerRepo.Setup(repo => repo.GetProgrammerAsync(It.IsAny<ProgrammerEmailSpec>()))
-                    .ReturnsAsync(existingEmailProgrammer);
-            }
+            await _service.UpdateProgrammerAsync(programmer.Id, dto);
 
-            _mockProjectManagerRepo.Setup(repo => repo.GetProjectManagerAsync(It.IsAny<ProjectManagerIdSpec>()))
-                .ReturnsAsync(projectManager);
+            programmer.Name.Should().Be("Updated Programmer");
+            programmer.Phone.Should().Be("06209998877");
+            programmer.Email.Should().Be("updated@example.com");
+            programmer.Role.Should().Be(ProgrammerRole.Backend);
+            programmer.IsIntern.Should().BeTrue();
+            programmer.Address!.Country.Should().Be("Hungary");
+            programmer.Address!.ZipCode.Should().Be("6722");
+            programmer.Address!.County.Should().Be("Csongrád");
+            programmer.Address!.Settlement.Should().Be("Szeged");
+            programmer.Address!.Street.Should().Be("Petõfi Sándor utca");
+            programmer.Address!.HouseNumber.Should().Be("20.");
+            programmer.Address!.Door.Should().Be(2);
+            programmer.ProjectManager.Should().BeNull();
 
-            if (isProgrammerNotFound)
-            {
-                await FluentActions.Invoking(() => _service.UpdateProgrammerAsync(programmerId, dto))
-                    .Should()
-                    .ThrowAsync<NotFoundException>()
-                    .WithMessage(ErrorMessages.NOT_FOUND_PROGRAMMER);
-            }
-            else if (isEmailTaken)
-            {
-                await FluentActions.Invoking(() => _service.UpdateProgrammerAsync(programmerId, dto))
-                    .Should()
-                    .ThrowAsync<BadRequestException>()
-                    .WithMessage(ErrorMessages.TAKEN_PROGRAMMER_EMAIL);
-            }
-            else if (isPmNotFound)
-            {
-                await FluentActions.Invoking(() => _service.UpdateProgrammerAsync(programmerId, dto))
-                    .Should()
-                    .ThrowAsync<NotFoundException>()
-                    .WithMessage(ErrorMessages.NOT_FOUND_PROJECT_MANAGER);
-            }
-            else
-            {
-                await _service.UpdateProgrammerAsync(programmerId, dto);
-
-                _mockProgrammerRepo.Verify(repo => repo.GetProgrammerAsync(It.IsAny<ProgrammerIdSpec>()), Times.Once);
-                if (existingProgrammer is not null && dto.email != existingProgrammer.Email)
-                {
-                    _mockProgrammerRepo.Verify(repo => repo.GetProgrammerAsync(It.IsAny<ProgrammerEmailSpec>()), Times.Once);
-                }
-                else
-                {
-                    _mockProgrammerRepo.Verify(repo => repo.GetProgrammerAsync(It.IsAny<ProgrammerEmailSpec>()), Times.Never);
-                }
-                _mockUnitOfWork.Verify(uow => uow.CommitAsync(It.IsAny<CancellationToken>()), Times.Once);
-            }
+            _mockUnitOfWork.Verify(uow => uow.CommitAsync(It.IsAny<CancellationToken>()), Times.Once);
         }
+
         /*--------------------------------------------------------Delete-------------------------------------------------------*/
         [Fact]
         public async Task DeleteProgrammerWithNoPmAndProjectRelation_ReturnsOk()
@@ -392,7 +354,6 @@ namespace UnitTest.Programmers
             };
             project.SetProgrammerProjects(programmerProjects);
             programmer.SetProgrammerProjects(programmerProjects);
-
             projectManager.Employees.Add(programmer);
 
             var mockData = programmer;

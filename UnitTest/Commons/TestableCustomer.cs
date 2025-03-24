@@ -6,6 +6,7 @@ namespace UnitTest.Commons
     {
         public TestableCustomer(string name, string phone, string email)
         {
+            Id = Guid.NewGuid();
             Name = name;
             Phone = phone;
             Email = email;

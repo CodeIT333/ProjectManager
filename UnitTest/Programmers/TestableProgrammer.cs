@@ -9,6 +9,8 @@ namespace UnitTest.Programmers
     {
         public TestableProgrammer(string name, string phone, string email, ProgrammerRole role, bool isIntern, ProjectManager? manager = null, bool? isArchived = null)
         {
+
+            Id = Guid.NewGuid();
             Name = name;
             Phone = phone;
             Email = email;
@@ -21,6 +23,7 @@ namespace UnitTest.Programmers
 
         public TestableProgrammer(string name, string phone, string email, ProgrammerRole role, bool isIntern, Address address)
         {
+            Id = Guid.NewGuid();
             Name = name;
             Phone = phone;
             Email = email;
