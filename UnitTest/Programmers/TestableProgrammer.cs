@@ -7,7 +7,7 @@ namespace UnitTest.Programmers
 {
     internal class TestableProgrammer : Programmer
     {
-        public TestableProgrammer(string name, string phone, string email, ProgrammerRole role, bool isIntern, ProjectManager? manager = null, bool? isArchived = null)
+        public TestableProgrammer(string name, string phone, string email, ProgrammerRole role, bool isIntern, ProjectManager? manager = null, bool isArchived = false)
         {
 
             Id = Guid.NewGuid();
@@ -18,7 +18,7 @@ namespace UnitTest.Programmers
             IsIntern = isIntern;
             ProjectManagerId = manager?.Id;
             ProjectManager = manager;
-            IsArchived = isArchived ?? false;
+            IsArchived = isArchived;
         }
 
         public TestableProgrammer(string name, string phone, string email, ProgrammerRole role, bool isIntern, Address address)

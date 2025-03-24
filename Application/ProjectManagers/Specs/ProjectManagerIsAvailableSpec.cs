@@ -14,7 +14,7 @@ namespace Application.ProjectManagers.Specs
 
         public override Expression<Func<ProjectManager, bool>> ToExpressAll()
         {
-            return pm => pm.isArchived != _isAvailable;
+            return pm => pm.IsArchived != _isAvailable;
         }
     }
 }

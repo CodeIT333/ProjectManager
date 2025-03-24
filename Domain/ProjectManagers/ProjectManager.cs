@@ -20,7 +20,7 @@ namespace Domain.ProjectManagers
         public List<Project> Projects { get; protected set; } = [];
         public List<Programmer> Employees { get; protected set; } = [];
         [DefaultValue(false)]
-        public bool isArchived { get; set; } = false;
+        public bool IsArchived { get; protected set; } = false;
 
         public static ProjectManager Create(
             string name,
@@ -47,7 +47,7 @@ namespace Domain.ProjectManagers
         {
             Projects.Clear();
             Employees.Clear();
-            isArchived = true;
+            IsArchived = true;
         }
     }
 }

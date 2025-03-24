@@ -8,12 +8,10 @@ using Application.ProjectManagers.Specs;
 using Application.Projects;
 using Domain.Commons;
 using Domain.Programmers;
-using Domain.ProjectManagers;
 using Domain.Projects;
 using FluentAssertions;
 using Infrastructure.Exceptions;
 using Moq;
-using System.Diagnostics;
 using UnitTest.Commons;
 using UnitTest.Configurations;
 using UnitTest.ProjectManagers;
@@ -62,7 +60,7 @@ namespace UnitTest.Programmers
                 .ReturnsAsync(mockData.Where(mockSpec.Object.ToExpressAll().Compile()).ToList());
 
             // Act
-            var result = await _service.ListProgrammersAsync();
+            var result = await _service.ListProgrammersAsync(true);
 
             result.Should().NotBeNull();
             result.Should().HaveCount(2);
@@ -89,7 +87,7 @@ namespace UnitTest.Programmers
 
             _mockProgrammerRepo.Setup(repo => repo.ListProgrammersAsync(It.IsAny<Specification<Programmer>>())).ReturnsAsync(mockData);
 
-            var result = await _service.ListProgrammersAsync();
+            var result = await _service.ListProgrammersAsync(true);
 
             result.Should().BeEmpty();
         }

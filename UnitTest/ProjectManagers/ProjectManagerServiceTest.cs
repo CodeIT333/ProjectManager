@@ -1,10 +1,8 @@
 ﻿using Application.Commons;
-using Application.Commons.DTOs;
 using Application.Programmers;
-using Application.Programmers.Specs;
 using Application.ProjectManagers;
-using Application.ProjectManagers.DTOs;
 using Application.ProjectManagers.Specs;
+using Application.Projects;
 using Domain.Commons;
 using Domain.Programmers;
 using Domain.ProjectManagers;
@@ -23,6 +21,7 @@ namespace UnitTest.ProjectManagers
     {
         private readonly Mock<IProjectManagerRepository> _mockProjectManagerRepo;
         private readonly Mock<IProgrammerRepository> _mockProgrammerRepo;
+        private readonly Mock<IProjectRepository> _mockProjectRepo;
         private readonly Mock<IUnitOfWork> _mockUnitOfWork;
         private readonly ProjectManagerService _service;
 
@@ -31,8 +30,13 @@ namespace UnitTest.ProjectManagers
             TestMapsterConfig.Configure();
             _mockProjectManagerRepo = new Mock<IProjectManagerRepository>();
             _mockProgrammerRepo = new Mock<IProgrammerRepository>();
+            _mockProjectRepo = new Mock<IProjectRepository>();
             _mockUnitOfWork = new Mock<IUnitOfWork>();
-            _service = new ProjectManagerService(_mockProjectManagerRepo.Object, _mockProgrammerRepo.Object, _mockUnitOfWork.Object);
+            _service = new ProjectManagerService(
+                _mockProjectManagerRepo.Object, 
+                _mockProgrammerRepo.Object, 
+                _mockProjectRepo.Object, 
+                _mockUnitOfWork.Object);
         }
 
         /*--------------------------------------------------------List-------------------------------------------------------*/
@@ -44,10 +48,13 @@ namespace UnitTest.ProjectManagers
                 new TestableProjectManager("Manager X", "987-654-3210", "managerX@example.com"),
                 new TestableProjectManager("Manager Y", "876-543-2109", "managerY@example.com")
             };
+            var mockSpec = new Mock<ISpecification<ProjectManager>>();
+            mockSpec.Setup(spec => spec.ToExpressAll()).Returns(pm => !pm.IsArchived);
 
-            _mockProjectManagerRepo.Setup(repo => repo.ListProjectManagersAsync()).ReturnsAsync(mockData);
+            _mockProjectManagerRepo.Setup(repo => repo.ListProjectManagersAsync(It.IsAny<Specification<ProjectManager>>()))
+                .ReturnsAsync(mockData);
 
-            var result = await _service.ListProjectManagersAsync();
+            var result = await _service.ListProjectManagersAsync(true);
 
             result.Should().NotBeNull();
             result.Should().HaveCount(2);
@@ -63,10 +70,13 @@ namespace UnitTest.ProjectManagers
         public async Task ListProjectManagers_ReturnsEmptyList()
         {
             var mockData = new List<ProjectManager>();
+            var mockSpec = new Mock<ISpecification<ProjectManager>>();
+            mockSpec.Setup(spec => spec.ToExpressAll()).Returns(pm => !pm.IsArchived);
 
-            _mockProjectManagerRepo.Setup(repo => repo.ListProjectManagersAsync()).ReturnsAsync(mockData);
+            _mockProjectManagerRepo.Setup(repo => repo.ListProjectManagersAsync(It.IsAny<Specification<ProjectManager>>()))
+                .ReturnsAsync(mockData);
 
-            var result = await _service.ListProjectManagersAsync();
+            var result = await _service.ListProjectManagersAsync(true);
 
             result.Should().BeEmpty();
         }
@@ -107,8 +117,10 @@ namespace UnitTest.ProjectManagers
             projectManager.SetProjects(new List<Project> { project1, project2 });
 
             var mockData = projectManager;
+            var mockSpec = new Mock<ISpecification<ProjectManager>>();
+            mockSpec.Setup(spec => spec.ToExpressAll()).Returns(pm => pm.Id == projectManager.Id && !pm.IsArchived);
 
-            _mockProjectManagerRepo.Setup(repo => repo.GetProjectManagerAsync(It.IsAny<ProjectManagerIdSpec>())).ReturnsAsync(mockData);
+            _mockProjectManagerRepo.Setup(repo => repo.GetProjectManagerAsync(It.IsAny<Specification<ProjectManager>>())).ReturnsAsync(mockData);
 
             var result = await _service.GetProjectManagerAsync(projectManager.Id);
             result.Should().NotBeNull();
@@ -136,8 +148,10 @@ namespace UnitTest.ProjectManagers
             projectManager.SetEmployees(new List<Programmer> { programmer1, programmer2 });
 
             var mockData = projectManager;
+            var mockSpec = new Mock<ISpecification<ProjectManager>>();
+            mockSpec.Setup(spec => spec.ToExpressAll()).Returns(pm => pm.Id == projectManager.Id && !pm.IsArchived);
 
-            _mockProjectManagerRepo.Setup(repo => repo.GetProjectManagerAsync(It.IsAny<ProjectManagerIdSpec>())).ReturnsAsync(mockData);
+            _mockProjectManagerRepo.Setup(repo => repo.GetProjectManagerAsync(It.IsAny<Specification<ProjectManager>>())).ReturnsAsync(mockData);
 
             var result = await _service.GetProjectManagerAsync(projectManager.Id);
             result.Should().NotBeNull();
@@ -245,5 +259,92 @@ namespace UnitTest.ProjectManagers
             }
         }
         */
+
+        /*--------------------------------------------------------Delete-------------------------------------------------------*/
+        [Fact]
+        public async Task DeleteProjectManagerWithNoEmployeesAndProjectRelation_ReturnsOk()
+        {
+            var projectManager = new TestableProjectManager("Alice Johnson", "06101234567", "email@gmail.com");
+
+            var mockData = projectManager;
+            var mockSpec = new Mock<ISpecification<ProjectManager>>();
+            mockSpec.Setup(spec => spec.ToExpressAll()).Returns(pm => pm.Id == projectManager.Id && !pm.IsArchived);
+
+            _mockProjectManagerRepo.Setup(repo => repo.GetProjectManagerAsync(It.IsAny<Specification<ProjectManager>>())).ReturnsAsync(mockData);
+
+            await _service.DeleteProjectManagerAsync(projectManager.Id);
+
+            projectManager.IsArchived.Should().BeTrue();
+
+            _mockUnitOfWork.Verify(uow => uow.CommitAsync(It.IsAny<CancellationToken>()), Times.Once);
+        }
+
+        [Fact]
+        public async Task DeleteProjectManagerWithEmployeesRelation_ReturnsOk()
+        {
+            var projectManager = new TestableProjectManager("Alice Johnson", "06101234567", "email@gmail.com");
+            var programmer = new TestableProgrammer("John Doe", "06201234567", "john@example.com", ProgrammerRole.FullStack, false, projectManager);
+ 
+            projectManager.SetEmployees(new List<Programmer> { programmer });
+
+            var mockData = projectManager;
+            var mockSpec = new Mock<ISpecification<ProjectManager>>();
+            mockSpec.Setup(spec => spec.ToExpressAll()).Returns(pm => pm.Id == projectManager.Id && !pm.IsArchived);
+
+            _mockProjectManagerRepo.Setup(repo => repo.GetProjectManagerAsync(It.IsAny<Specification<ProjectManager>>())).ReturnsAsync(mockData);
+
+            await _service.DeleteProjectManagerAsync(projectManager.Id);
+
+            projectManager.IsArchived.Should().BeTrue();
+            projectManager.Employees.Should().BeEmpty();
+            projectManager.Projects.Should().BeEmpty();
+
+            programmer.ProjectManager.Should().BeNull();
+            programmer.ProjectManagerId.Should().BeNull();
+
+            _mockUnitOfWork.Verify(uow => uow.CommitAsync(It.IsAny<CancellationToken>()), Times.Once);
+        }
+
+        [Fact]
+        public async Task DeleteProjectManagerWithProjectRelation_Returns400Exception()
+        {
+            var projectManager = new TestableProjectManager("Alice Johnson", "06101234567", "email@gmail.com");
+            var project = new TestableProject(
+                projectManager,
+                new TestableCustomer("Acme Corp", "00000", "acme@gmail.com"),
+                new DateOnly(2025, 03, 22),
+                "New project");
+            projectManager.SetProjects(new List<Project> { project });
+
+            var mockData = projectManager;
+            var mockSpec = new Mock<ISpecification<ProjectManager>>();
+            mockSpec.Setup(spec => spec.ToExpressAll()).Returns(pm => pm.Id == projectManager.Id && !pm.IsArchived);
+
+            _mockProjectManagerRepo.Setup(repo => repo.GetProjectManagerAsync(It.IsAny<Specification<ProjectManager>>())).ReturnsAsync(mockData);
+
+            await FluentActions
+                .Invoking(() => _service.DeleteProjectManagerAsync(projectManager.Id))
+                .Should()
+                .ThrowAsync<BadRequestException>()
+                .WithMessage(ErrorMessages.EXISTING_PROJECT_FOR_PROJECT_MANAGER);
+        }
+
+        [Fact]
+        public async Task DeleteProjectManager_Returns404sError()
+        {
+            var projectManager = new TestableProjectManager("Alice Johnson", "06101234567", "email@gmail.com", true);
+
+            var mockData = (TestableProjectManager?)null;
+            var mockSpec = new Mock<ISpecification<ProjectManager>>();
+            mockSpec.Setup(spec => spec.ToExpressAll()).Returns(p => !p.IsArchived);
+
+            _mockProjectManagerRepo.Setup(repo => repo.GetProjectManagerAsync(It.IsAny<Specification<ProjectManager>>())).ReturnsAsync(mockData);
+
+            await FluentActions
+                .Invoking(() => _service.DeleteProjectManagerAsync(projectManager.Id))
+                .Should()
+                .ThrowAsync<NotFoundException>()
+                .WithMessage(ErrorMessages.NOT_FOUND_PROJECT_MANAGER);
+        }
     }
 }
