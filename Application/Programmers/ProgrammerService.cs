@@ -34,13 +34,13 @@ namespace Application.Programmers
 
         public async Task<List<ProgrammerListDTO>> ListProgrammersAsync()
         {
-            var programmers = await _programmerRepo.ListProgrammersAsync();
+            var programmers = await _programmerRepo.ListProgrammersAsync(new ProgrammerAvailableSpec(true));
             return programmers.Adapt<List<ProgrammerListDTO>>();
         }
 
         public async Task<ProgrammerGetDTO> GetProgrammerAsync(Guid id)
         {
-            var programmer = await _programmerRepo.GetProgrammerAsync(new ProgrammerIdSpec(id));
+            var programmer = await _programmerRepo.GetProgrammerAsync(new ProgrammerIdSpec(id).And(new ProgrammerAvailableSpec(true)));
             if (programmer is null)
                 throw new NotFoundException(ErrorMessages.NOT_FOUND_PROGRAMMER);
 
@@ -49,7 +49,7 @@ namespace Application.Programmers
 
         public async Task CreateProgrammerAsync(ProgrammerCreateUpdateDTO dto)
         {
-            var existingProgrammer = await _programmerRepo.GetProgrammerAsync(new ProgrammerEmailSpec(dto.email));
+            var existingProgrammer = await _programmerRepo.GetProgrammerAsync(new ProgrammerEmailSpec(dto.email).And(new ProgrammerAvailableSpec(true)));
             if (existingProgrammer is not null)
                 throw new BadRequestException(ErrorMessages.TAKEN_PROGRAMMER_EMAIL);
 
@@ -81,13 +81,13 @@ namespace Application.Programmers
 
         public async Task UpdateProgrammerAsync(Guid id, ProgrammerCreateUpdateDTO dto)
         {
-            var programmer = await _programmerRepo.GetProgrammerAsync(new ProgrammerIdSpec(id));
+            var programmer = await _programmerRepo.GetProgrammerAsync(new ProgrammerIdSpec(id).And(new ProgrammerAvailableSpec(true)));
             if (programmer is null)
                 throw new NotFoundException(ErrorMessages.NOT_FOUND_PROGRAMMER);
 
             if (dto.email != programmer.Email)
             {
-                var ProgrammerWithExistingEmail = await _programmerRepo.GetProgrammerAsync(new ProgrammerEmailSpec(dto.email));
+                var ProgrammerWithExistingEmail = await _programmerRepo.GetProgrammerAsync(new ProgrammerEmailSpec(dto.email).And(new ProgrammerAvailableSpec(true)));
                 if (ProgrammerWithExistingEmail is not null)
                     throw new BadRequestException(ErrorMessages.TAKEN_PROGRAMMER_EMAIL);
             }
@@ -127,7 +127,7 @@ namespace Application.Programmers
 
         public async Task DeleteProgrammerAsync(Guid id)
         {
-            var programmer = await _programmerRepo.GetProgrammerAsync(new ProgrammerIdSpec(id));
+            var programmer = await _programmerRepo.GetProgrammerAsync(new ProgrammerIdSpec(id).And(new ProgrammerAvailableSpec(true)));
             if (programmer is null)
                 throw new NotFoundException(ErrorMessages.NOT_FOUND_PROGRAMMER);
 
