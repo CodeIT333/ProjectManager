@@ -64,7 +64,7 @@ namespace Application.ProjectManagers
             {
                 foreach (var employeeId in dto.employeeIds)
                 {
-                    var programmer = await _programmerRepo.GetProgrammerAsync(new ProgrammerIdSpec(employeeId));
+                    var programmer = await _programmerRepo.GetProgrammerAsync(new ProgrammerIdSpec(employeeId).And(new ProgrammerAvailableSpec(true)));
                     if (programmer is null)
                         throw new NotFoundException(ErrorMessages.NOT_FOUND_PROGRAMMER);
 

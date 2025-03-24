@@ -55,5 +55,14 @@ namespace API.Controllers
             await _programmerService.UpdateProgrammerAsync(id, dto);
             return NoContent();
         }
+
+        [HttpDelete("{id}")]
+        [SwaggerResponse(204)]
+        [SwaggerResponse(404, Type = typeof(ErrorResponse))]
+        public async Task<ActionResult> DeleteProgrammerAsync(Guid id)
+        {
+            await _programmerService.DeleteProgrammerAsync(id);
+            return NoContent();
+        }
     }
 }

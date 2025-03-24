@@ -5,12 +5,15 @@ using Application.Programmers.DTOs;
 using Application.Programmers.Specs;
 using Application.ProjectManagers;
 using Application.ProjectManagers.Specs;
+using Application.Projects;
 using Domain.Commons;
 using Domain.Programmers;
+using Domain.ProjectManagers;
 using Domain.Projects;
 using FluentAssertions;
 using Infrastructure.Exceptions;
 using Moq;
+using System.Diagnostics;
 using UnitTest.Commons;
 using UnitTest.Configurations;
 using UnitTest.ProjectManagers;
@@ -20,6 +23,7 @@ namespace UnitTest.Programmers
 {
     public class ProgrammerServiceTest : Programmer
     {
+        private readonly Mock<IProgrammerProjectRepository> _mockProgrammerProjectRepo;
         private readonly Mock<IProjectManagerRepository> _mockProjectManagerRepo;
         private readonly Mock<IProgrammerRepository> _mockProgrammerRepo; // for mocking the repository
         private readonly Mock<IUnitOfWork> _mockUnitOfWork;
@@ -28,24 +32,36 @@ namespace UnitTest.Programmers
         public ProgrammerServiceTest()
         {
             TestMapsterConfig.Configure(); // init mapster
+            _mockProgrammerProjectRepo = new Mock<IProgrammerProjectRepository>();
             _mockProjectManagerRepo = new Mock<IProjectManagerRepository>();
             _mockProgrammerRepo = new Mock<IProgrammerRepository>();
             _mockUnitOfWork = new Mock<IUnitOfWork>();
-            _service = new ProgrammerService(_mockProjectManagerRepo.Object, _mockProgrammerRepo.Object, _mockUnitOfWork.Object);
+            _service = new ProgrammerService(
+                _mockProgrammerProjectRepo.Object, 
+                _mockProjectManagerRepo.Object, 
+                _mockProgrammerRepo.Object, 
+                _mockUnitOfWork.Object);
         }
 
         /*--------------------------------------------------------List-------------------------------------------------------*/
         [Fact]
-        public async Task ListProgrammers_ReturnsListOfProgrammers()
+        public async Task ListProgrammers_ReturnsListOfAvailableProgrammers()
         {
             var mockData = new List<Programmer>
             {
                 new TestableProgrammer("John Doe", "06201234567", "john@example.com", ProgrammerRole.FullStack, false),
-                new TestableProgrammer("Jane Smith", "06207654321", "jane@example.com", ProgrammerRole.Backend, true)
+                new TestableProgrammer("Jane Smith", "06207654321", "jane@example.com", ProgrammerRole.Backend, true),
+                new TestableProgrammer("Archived Programmer", "06207653333", "arch@example.com", ProgrammerRole.Backend, true, null, true),
             };
 
-            _mockProgrammerRepo.Setup(repo => repo.ListProgrammersAsync(It.IsAny<Specification<Programmer>>())).ReturnsAsync(mockData);
+            // Create the mock specification to filter out archived programmers
+            var mockSpec = new Mock<ISpecification<Programmer>>();
+            mockSpec.Setup(spec => spec.ToExpressAll()).Returns(p => !p.IsArchived);
 
+            _mockProgrammerRepo.Setup(repo => repo.ListProgrammersAsync(It.IsAny<Specification<Programmer>>()))
+                .ReturnsAsync(mockData.Where(mockSpec.Object.ToExpressAll().Compile()).ToList());
+
+            // Act
             var result = await _service.ListProgrammersAsync();
 
             result.Should().NotBeNull();
@@ -65,9 +81,11 @@ namespace UnitTest.Programmers
         }
 
         [Fact]
-        public async Task ListProgrammers_ReturnsEmptyList()
+        public async Task ListProgrammers_ReturnsEmptyListOfAvailableProgrammers()
         {
             var mockData = new List<Programmer>();
+            var mockSpec = new Mock<ISpecification<Programmer>>();
+            mockSpec.Setup(spec => spec.ToExpressAll()).Returns(p => !p.IsArchived);
 
             _mockProgrammerRepo.Setup(repo => repo.ListProgrammersAsync(It.IsAny<Specification<Programmer>>())).ReturnsAsync(mockData);
 
@@ -78,7 +96,7 @@ namespace UnitTest.Programmers
 
         /*--------------------------------------------------------Get-------------------------------------------------------*/
         [Fact]
-        public async Task GetProgrammerById_ReturnsProgrammerWithAddressAndOneProjectAndWithoutProjectManager()
+        public async Task GetProgrammerById_ReturnsAvailableProgrammerWithAddressAndOneProjectAndWithoutProjectManager()
         {
             var programmerAddress = new TestableAddress("Hungary", "6722", "Csongrád", "Szeged", "Kossuth Lajos sugárút", "15.", 1);
             var programmer = new TestableProgrammer("John Doe", "06201234567", "john@example.com", ProgrammerRole.FullStack, false, programmerAddress);
@@ -95,13 +113,13 @@ namespace UnitTest.Programmers
             );
             
             var programmerProject = new TestableProgrammerProject(programmer, project);
-            project.setProgrammerProjects(new List<ProgrammerProject> { programmerProject });
+            project.SetProgrammerProjects(new List<ProgrammerProject> { programmerProject });
 
             programmer.ProgrammerProjects.Add(programmerProject);
 
             var mockData = programmer;
             var mockSpec = new Mock<ISpecification<Programmer>>();
-            mockSpec.Setup(spec => spec.ToExpressAll()).Returns(p => p.Id == programmer.Id);
+            mockSpec.Setup(spec => spec.ToExpressAll()).Returns(p => p.Id == programmer.Id && !p.IsArchived);
 
             _mockProgrammerRepo.Setup(repo => repo.GetProgrammerAsync(It.IsAny<Specification<Programmer>>())).ReturnsAsync(mockData);
 
@@ -130,14 +148,14 @@ namespace UnitTest.Programmers
         }
 
         [Fact]
-        public async Task GetProgrammerById_ReturnsProgrammerWithoutProjectAndWithProjectManager()
+        public async Task GetProgrammerById_ReturnsAvailableProgrammerWithoutProjectAndWithProjectManager()
         {
             var projectManager = new TestableProjectManager("Alice Johnson", "06101234567", "alice@gmail.com");
             var programmer = new TestableProgrammer("John Doe", "06201234567", "john@example.com", ProgrammerRole.FullStack, false, projectManager);
 
             var mockData = programmer;
             var mockSpec = new Mock<ISpecification<Programmer>>();
-            mockSpec.Setup(spec => spec.ToExpressAll()).Returns(p => p.Id == programmer.Id);
+            mockSpec.Setup(spec => spec.ToExpressAll()).Returns(p => p.Id == programmer.Id && !p.IsArchived);
 
             _mockProgrammerRepo.Setup(repo => repo.GetProgrammerAsync(It.IsAny<Specification<Programmer>>())).ReturnsAsync(mockData);
 
@@ -154,17 +172,35 @@ namespace UnitTest.Programmers
         }
 
         [Fact]
-        public async Task GetProgrammerByNotExistingProgrammerId_Returns404ProgrammerError()
+        public async Task GetAvailableProgrammerByNotExistingProgrammerId_Returns404ProgrammerError()
         {
             var notExistingId = Guid.NewGuid();
             var mockData = (TestableProgrammer?)null;
             var mockSpec = new Mock<ISpecification<Programmer>>();
-            mockSpec.Setup(spec => spec.ToExpressAll()).Returns(p => p.Id == notExistingId);
+            mockSpec.Setup(spec => spec.ToExpressAll()).Returns(p => p.Id == notExistingId && !p.IsArchived);
 
             _mockProgrammerRepo.Setup(repo => repo.GetProgrammerAsync(It.IsAny<Specification<Programmer>>())).ReturnsAsync(mockData);
 
             await FluentActions
                 .Invoking(() => _service.GetProgrammerAsync(notExistingId))
+                .Should()
+                .ThrowAsync<NotFoundException>()
+                .WithMessage(ErrorMessages.NOT_FOUND_PROGRAMMER);
+        }
+
+        [Fact]
+        public async Task GetUnavailableProgrammerById_Returns404ProgrammerError()
+        {
+            var programmer = new TestableProgrammer("John Doe", "06201234567", "john@example.com", ProgrammerRole.FullStack, false, null, true);
+            
+            var mockData = (TestableProgrammer?)null;
+            var mockSpec = new Mock<ISpecification<Programmer>>();
+            mockSpec.Setup(spec => spec.ToExpressAll()).Returns(p => !p.IsArchived);
+
+            _mockProgrammerRepo.Setup(repo => repo.GetProgrammerAsync(It.IsAny<Specification<Programmer>>())).ReturnsAsync(mockData);
+
+            await FluentActions
+                .Invoking(() => _service.GetProgrammerAsync(programmer.Id))
                 .Should()
                 .ThrowAsync<NotFoundException>()
                 .WithMessage(ErrorMessages.NOT_FOUND_PROGRAMMER);
@@ -176,7 +212,7 @@ namespace UnitTest.Programmers
         [InlineData(true, false, false)]  // email is already taken
         [InlineData(false, true, false)]  // project manager not found
         [InlineData(false, false, true)]  // success with valid Project Manager
-        public async Task CreateProgrammerAsync_HandlesDifferentScenarios(bool isEmailTaken, bool isPmNotFound, bool isPmValid)
+        public async Task CreateProgrammer_HandlesDifferentScenarios(bool isEmailTaken, bool isPmNotFound, bool isPmValid)
         {
             var programmerEmail = "test@example.com";
             var projectManagerId = isPmValid ? Guid.NewGuid() : (isPmNotFound ? Guid.NewGuid() : (Guid?)null);
@@ -232,27 +268,14 @@ namespace UnitTest.Programmers
         }
 
         /*--------------------------------------------------------Update-------------------------------------------------------*/
-        [Theory]
-        [InlineData(false, false, false, false)] // success without pm
-        [InlineData(true, false, false, false)]  // email is taken
-        [InlineData(false, true, false, false)]  // programmer not found
-        [InlineData(false, false, true, false)]  // pm not found
-        [InlineData(false, false, false, true)]  // success with pm
-        public async Task UpdateProgrammerAsync_HandlesDifferentScenarios(bool isEmailTaken, bool isProgrammerNotFound, bool isPmNotFound, bool isPmValid)
+        [Fact]
+        public async Task UpdateProgrammerWithoutProjectManager_ReturnsOk()
         {
-            var programmerId = Guid.NewGuid();
-            var existingEmail = "existing@example.com";
-            var newEmail = "new@example.com";
-
-            var existingProgrammer = isProgrammerNotFound
-                ? null
-                : new TestableProgrammer("Test Programmer", "06201234567", existingEmail, ProgrammerRole.FullStack, false, 
-                    new TestableAddress("Hungary", "6722", "Csongrád", "Szeged", "Kossuth Lajos sugárút", "15.", 1));
-
+            var programmer = new TestableProgrammer("John Doe", "06201234567", "john@example.com", ProgrammerRole.FullStack, false);
             var dto = new ProgrammerCreateUpdateDTO
             {
                 name = "Updated Programmer",
-                email = isEmailTaken ? newEmail : existingEmail,
+                email = "updated@example.com",
                 phone = "06209998877",
                 address = new AddressDTO
                 {
@@ -267,61 +290,108 @@ namespace UnitTest.Programmers
                 dateOfBirth = new DateOnly(1992, 8, 14),
                 role = ProgrammerRole.Backend,
                 isIntern = true,
-                projectManagerId = isPmValid ? Guid.NewGuid() : (isPmNotFound ? Guid.NewGuid() : (Guid?)null)
+                projectManagerId = null
             };
 
-            var existingEmailProgrammer = isEmailTaken ? new TestableProgrammer("Existing Programmer", "06209876543", newEmail, ProgrammerRole.Frontend, false) : null;
-            
-            var projectManager = isPmNotFound ? null : (isPmValid ? new TestableProjectManager("Project Manager", "06101234567", "pm@example.com") : null);
+            var mockData = programmer;
+            var mockSpec = new Mock<ISpecification<Programmer>>();
+            mockSpec.Setup(spec => spec.ToExpressAll()).Returns(p => p.Id == programmer.Id && p.Email != dto.email && !p.IsArchived);
 
-            _mockProgrammerRepo.Setup(repo => repo.GetProgrammerAsync(It.IsAny<ProgrammerIdSpec>()))
-                .ReturnsAsync(existingProgrammer);
+            _mockProgrammerRepo.Setup(repo => repo.GetProgrammerAsync(It.IsAny<Specification<Programmer>>())).ReturnsAsync(mockData);
+            _mockProgrammerRepo.Setup(repo => repo.GetProgrammerAsync(It.IsAny<ProgrammerEmailSpec>())).ReturnsAsync((Programmer?)null);
 
-            if (existingProgrammer is not null && dto.email != existingProgrammer.Email)
-            {
-                _mockProgrammerRepo.Setup(repo => repo.GetProgrammerAsync(It.IsAny<ProgrammerEmailSpec>()))
-                    .ReturnsAsync(existingEmailProgrammer);
-            }
+            await _service.UpdateProgrammerAsync(programmer.Id, dto);
 
-            _mockProjectManagerRepo.Setup(repo => repo.GetProjectManagerAsync(It.IsAny<ProjectManagerIdSpec>()))
-                .ReturnsAsync(projectManager);
+            programmer.Name.Should().Be("Updated Programmer");
+            programmer.Phone.Should().Be("06209998877");
+            programmer.Email.Should().Be("updated@example.com");
+            programmer.Role.Should().Be(ProgrammerRole.Backend);
+            programmer.IsIntern.Should().BeTrue();
+            programmer.Address!.Country.Should().Be("Hungary");
+            programmer.Address!.ZipCode.Should().Be("6722");
+            programmer.Address!.County.Should().Be("Csongrád");
+            programmer.Address!.Settlement.Should().Be("Szeged");
+            programmer.Address!.Street.Should().Be("Petõfi Sándor utca");
+            programmer.Address!.HouseNumber.Should().Be("20.");
+            programmer.Address!.Door.Should().Be(2);
+            programmer.ProjectManager.Should().BeNull();
 
-            if (isProgrammerNotFound)
-            {
-                await FluentActions.Invoking(() => _service.UpdateProgrammerAsync(programmerId, dto))
-                    .Should()
-                    .ThrowAsync<NotFoundException>()
-                    .WithMessage(ErrorMessages.NOT_FOUND_PROGRAMMER);
-            }
-            else if (isEmailTaken)
-            {
-                await FluentActions.Invoking(() => _service.UpdateProgrammerAsync(programmerId, dto))
-                    .Should()
-                    .ThrowAsync<BadRequestException>()
-                    .WithMessage(ErrorMessages.TAKEN_PROGRAMMER_EMAIL);
-            }
-            else if (isPmNotFound)
-            {
-                await FluentActions.Invoking(() => _service.UpdateProgrammerAsync(programmerId, dto))
-                    .Should()
-                    .ThrowAsync<NotFoundException>()
-                    .WithMessage(ErrorMessages.NOT_FOUND_PROJECT_MANAGER);
-            }
-            else
-            {
-                await _service.UpdateProgrammerAsync(programmerId, dto);
+            _mockUnitOfWork.Verify(uow => uow.CommitAsync(It.IsAny<CancellationToken>()), Times.Once);
+        }
 
-                _mockProgrammerRepo.Verify(repo => repo.GetProgrammerAsync(It.IsAny<ProgrammerIdSpec>()), Times.Once);
-                if (existingProgrammer is not null && dto.email != existingProgrammer.Email)
-                {
-                    _mockProgrammerRepo.Verify(repo => repo.GetProgrammerAsync(It.IsAny<ProgrammerEmailSpec>()), Times.Once);
-                }
-                else
-                {
-                    _mockProgrammerRepo.Verify(repo => repo.GetProgrammerAsync(It.IsAny<ProgrammerEmailSpec>()), Times.Never);
-                }
-                _mockUnitOfWork.Verify(uow => uow.CommitAsync(It.IsAny<CancellationToken>()), Times.Once);
-            }
+        /*--------------------------------------------------------Delete-------------------------------------------------------*/
+        [Fact]
+        public async Task DeleteProgrammerWithNoPmAndProjectRelation_ReturnsOk()
+        {
+            var programmer = new TestableProgrammer("John Doe", "06201234567", "john@example.com", ProgrammerRole.FullStack, false);
+
+            var mockData = programmer;
+            var mockSpec = new Mock<ISpecification<Programmer>>();
+            mockSpec.Setup(spec => spec.ToExpressAll()).Returns(p => p.Id == programmer.Id && !p.IsArchived);
+            _mockProgrammerRepo.Setup(repo => repo.GetProgrammerAsync(It.IsAny<Specification<Programmer>>())).ReturnsAsync(mockData);
+            _mockProgrammerProjectRepo.Setup(repo => repo.DeleteProgrammerProject(It.IsAny<ProgrammerProject>())).Verifiable();
+
+            await _service.DeleteProgrammerAsync(programmer.Id);
+
+            programmer.IsArchived.Should().BeTrue();
+
+            _mockUnitOfWork.Verify(uow => uow.CommitAsync(It.IsAny<CancellationToken>()), Times.Once);
+        }
+
+        [Fact]
+        public async Task DeleteProgrammerWithProjectManagerAndProjectRelation_ReturnsOk()
+        {
+            var projectManager = new TestableProjectManager("Alice Johnson", "06101234567", "alice@gmail.com");
+            var programmer = new TestableProgrammer("John Doe", "06201234567", "john@example.com", ProgrammerRole.FullStack, false, projectManager);
+            var project = new TestableProject(
+                projectManager, 
+                new TestableCustomer("Acme Corp", "00000", "acme@gmail.com"), 
+                new DateOnly(2025, 03, 22), 
+                "New project");
+            var programmerProjects = new List<ProgrammerProject>()
+            {
+                new TestableProgrammerProject(programmer, project)
+            };
+            project.SetProgrammerProjects(programmerProjects);
+            programmer.SetProgrammerProjects(programmerProjects);
+            projectManager.Employees.Add(programmer);
+
+            var mockData = programmer;
+            var mockSpec = new Mock<ISpecification<Programmer>>();
+            mockSpec.Setup(spec => spec.ToExpressAll()).Returns(p => p.Id == programmer.Id && !p.IsArchived);
+            _mockProgrammerRepo.Setup(repo => repo.GetProgrammerAsync(It.IsAny<Specification<Programmer>>())).ReturnsAsync(mockData);
+            _mockProgrammerProjectRepo.Setup(repo => repo.DeleteProgrammerProject(It.IsAny<ProgrammerProject>())).Verifiable();
+
+            await _service.DeleteProgrammerAsync(programmer.Id);
+
+            programmer.IsArchived.Should().BeTrue();
+            programmer.ProjectManager.Should().BeNull();
+            programmer.ProgrammerProjects.Should().BeEmpty();
+
+            project.ProgrammerProjects.Should().BeEmpty();
+
+            projectManager.Employees.Should().NotContain(programmer);
+
+            _mockProgrammerProjectRepo.Verify(repo => repo.DeleteProgrammerProject(It.IsAny<ProgrammerProject>()), Times.Once);
+            _mockUnitOfWork.Verify(uow => uow.CommitAsync(It.IsAny<CancellationToken>()), Times.Once);
+        }
+
+        [Fact]
+        public async Task DeleteProgrammer_Returns404sError()
+        {
+            var programmer = new TestableProgrammer("John Doe", "06201234567", "john@example.com", ProgrammerRole.FullStack, false, null, true);
+
+            var mockData = (TestableProgrammer?)null;
+            var mockSpec = new Mock<ISpecification<Programmer>>();
+            mockSpec.Setup(spec => spec.ToExpressAll()).Returns(p => !p.IsArchived);
+
+            _mockProgrammerRepo.Setup(repo => repo.GetProgrammerAsync(It.IsAny<Specification<Programmer>>())).ReturnsAsync(mockData);
+
+            await FluentActions
+                .Invoking(() => _service.DeleteProgrammerAsync(programmer.Id))
+                .Should()
+                .ThrowAsync<NotFoundException>()
+                .WithMessage(ErrorMessages.NOT_FOUND_PROGRAMMER);
         }
     }
 }

@@ -8,6 +8,7 @@ namespace UnitTest.Projects
     {
         public TestableProject(ProjectManager manager, Customer customer, DateOnly startDate, string description)
         {
+            Id = Guid.NewGuid();
             ProjectManagerId = manager.Id;
             ProjectManager = manager;
             CustomerId = customer.Id;
@@ -16,7 +17,7 @@ namespace UnitTest.Projects
             Description = description;
         }
 
-        public void setProgrammerProjects(List<ProgrammerProject> programmerProjects)
+        public void SetProgrammerProjects(List<ProgrammerProject> programmerProjects)
         {
             ProgrammerProjects = programmerProjects;
         }
