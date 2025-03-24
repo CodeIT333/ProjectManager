@@ -205,7 +205,7 @@ namespace UnitTest.Projects
             var customerId = Guid.NewGuid();
             var validProgrammerIds = new List<Guid> { Guid.NewGuid() };
 
-            var dto = new ProjectCreateDTO
+            var dto = new ProjectCreateUpdateDTO
             {
                 description = "Project description",
                 projectManagerId = projectManagerId,

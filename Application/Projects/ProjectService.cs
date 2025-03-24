@@ -56,7 +56,7 @@ namespace Application.Projects
             return project.Adapt<ProjectGetDTO>();
         }
 
-        public async Task CreateProjectAsync(ProjectCreateDTO dto)
+        public async Task CreateProjectAsync(ProjectCreateUpdateDTO dto)
         {
             var projectManager = await _projectManagerRepos.GetProjectManagerAsync(new ProjectManagerIdSpec(dto.projectManagerId));
             if (projectManager is null)
@@ -94,6 +94,65 @@ namespace Application.Projects
             }
 
             project.ProgrammerProjects.AddRange(programmerProjects);
+            await _uow.CommitAsync();
+        }
+
+        public async Task UpdateProjectAsync(Guid id, ProjectCreateUpdateDTO dto)
+        {
+            var project = await _projectRepo.GetProjectAsync(id);
+            if (project is null)
+                throw new NotFoundException(ErrorMessages.NOT_FOUND_PROJECT);
+
+            var projectManager = await _projectManagerRepos.GetProjectManagerAsync(new ProjectManagerIdSpec(dto.projectManagerId));
+            if (projectManager is null)
+                throw new NotFoundException(ErrorMessages.NOT_FOUND_PROJECT_MANAGER);
+
+            var customer = await _customerRepo.GetCustomerAsync(dto.customerId);
+            if (customer is null)
+                throw new NotFoundException(ErrorMessages.NOT_FOUND_CUSTOMER);
+
+            var programmers = new List<Programmer>();
+            if (dto.programmerIds is not null && dto.programmerIds.Any())
+            {
+                foreach (var programmerId in dto.programmerIds)
+                {
+                    var programmer = await _programmerRepo.GetProgrammerAsync(new ProgrammerIdSpec(programmerId));
+                    if (programmer is null)
+                        throw new NotFoundException(ErrorMessages.NOT_FOUND_PROGRAMMER);
+
+                    programmers.Add(programmer);
+                }
+            }
+            // TODO programmerProjects
+            //programmers.ForEach(p => p.ProgrammerProjects.Add(ProgrammerProject.Create(project, p)));
+            // programmers to add | programmers to remove
+            
+            var programmersToAdd = programmers.Where(p => !project.ProgrammerProjects.Any(pp => pp.ProgrammerId == p.Id)).ToList();
+            var programmersToRemove = project.ProgrammerProjects.Where(pp => !programmers.Any(p => p.Id == pp.ProgrammerId)).ToList();
+
+
+
+
+
+            List<ProgrammerProject> programmerProjects = new();
+            foreach (var programmer in programmers)
+            {
+                var programmerProject = ProgrammerProject.Create(project, programmer);
+                await _programmerProjectRepo.CreateProgrammerProjectAsync(programmerProject);
+                await _uow.CommitAsync();
+
+                programmer.ProgrammerProjects.Add(programmerProject);
+            }
+
+            project.ProgrammerProjects.AddRange(programmerProjects);
+            await _uow.CommitAsync();
+
+            project.Update(
+                projectManager, 
+                programmerProjects,
+                customer, 
+                dto.description);
+
             await _uow.CommitAsync();
         }
     }

@@ -39,9 +39,18 @@ namespace API.Controllers
         [HttpPost]
         [SwaggerResponse(201)]
         [SwaggerResponse(404, Type = typeof(ErrorResponse))]
-        public async Task<IActionResult> CreateProjectAsync(ProjectCreateDTO dto)
+        public async Task<IActionResult> CreateProjectAsync(ProjectCreateUpdateDTO dto)
         {
             await _projectService.CreateProjectAsync(dto);
+            return Ok();
+        }
+
+        [HttpPut("{id}")]
+        [SwaggerResponse(200)]
+        [SwaggerResponse(404, Type = typeof(ErrorResponse))]
+        public async Task<IActionResult> UpdateProjectAsync(Guid id, ProjectCreateUpdateDTO dto)
+        {
+            await _projectService.UpdateProjectAsync(id, dto);
             return Ok();
         }
     }
