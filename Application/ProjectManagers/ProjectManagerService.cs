@@ -3,6 +3,7 @@ using Application.Programmers;
 using Application.Programmers.Specs;
 using Application.ProjectManagers.DTOs;
 using Application.ProjectManagers.Specs;
+using Application.Projects;
 using Domain.Commons;
 using Domain.Programmers;
 using Domain.ProjectManagers;
@@ -15,28 +16,31 @@ namespace Application.ProjectManagers
     {
         private readonly IProjectManagerRepository _projectManagerRepo;
         private readonly IProgrammerRepository _programmerRepo;
+        private readonly IProjectRepository _projectRepo;
         private readonly IUnitOfWork _uow;
 
         public ProjectManagerService(
             IProjectManagerRepository projectManagerRepo,
             IProgrammerRepository programmerRepo,
+            IProjectRepository projectRepo,
             IUnitOfWork uow
             )
         {
             _projectManagerRepo = projectManagerRepo;
             _programmerRepo = programmerRepo;
+            _projectRepo = projectRepo;
             _uow = uow;
         }
 
-        public async Task<List<ProjectManagerListDTO>> ListProjectManagersAsync()
+        public async Task<List<ProjectManagerListDTO>> ListProjectManagersAsync(bool isAvaiable)
         {
-            var projectManagers = await _projectManagerRepo.ListProjectManagersAsync();
+            var projectManagers = await _projectManagerRepo.ListProjectManagersAsync(new ProjectManagerIsAvailableSpec(isAvaiable));
             return projectManagers.Adapt<List<ProjectManagerListDTO>>();
         }
 
         public async Task<ProjectManagerGetDTO> GetProjectManagerAsync(Guid id)
         {
-            var projectManager = await _projectManagerRepo.GetProjectManagerAsync(new ProjectManagerIdSpec(id));
+            var projectManager = await _projectManagerRepo.GetProjectManagerAsync(new ProjectManagerIdSpec(id).And(new ProjectManagerIsAvailableSpec(true)));
             if (projectManager is null)
                 throw new NotFoundException(ErrorMessages.NOT_FOUND_PROJECT_MANAGER);
             
@@ -45,7 +49,7 @@ namespace Application.ProjectManagers
 
         public async Task CreateProjectManagerAsync(ProjectManagerCreateDTO dto)
         {
-            var existingProjectManager = await _projectManagerRepo.GetProjectManagerAsync(new ProjectManagerEmailSpec(dto.email));
+            var existingProjectManager = await _projectManagerRepo.GetProjectManagerAsync(new ProjectManagerEmailSpec(dto.email).And(new ProjectManagerIsAvailableSpec(true)));
             if (existingProjectManager is not null)
                 throw new BadRequestException(ErrorMessages.TAKEN_PROJECT_MANAGER_EMAIL);
 
@@ -82,6 +86,25 @@ namespace Application.ProjectManagers
             );
 
             await _projectManagerRepo.CreateProjectManagerAsync(projectManager);
+            await _uow.CommitAsync();
+        }
+
+        public async Task DeleteProjectManagerAsync(Guid id)
+        {
+            var projectManager = await _projectManagerRepo.GetProjectManagerAsync(new ProjectManagerIdSpec(id).And(new ProjectManagerIsAvailableSpec(true)));
+            if (projectManager is null)
+                throw new NotFoundException(ErrorMessages.NOT_FOUND_PROJECT_MANAGER);
+
+            // projects
+            if (projectManager.Projects.Any())
+                throw new BadRequestException(ErrorMessages.EXISTING_PROJECT_FOR_PROJECT_MANAGER);
+
+            // programmers
+            if (projectManager.Employees.Any())
+                projectManager.Employees.ForEach(p => p.RemoveProjectManager());
+
+            projectManager.Delete();
+
             await _uow.CommitAsync();
         }
     }

@@ -2,6 +2,7 @@
 using Domain.Commons.Models;
 using Domain.Programmers;
 using Domain.Projects;
+using System.ComponentModel;
 using System.ComponentModel.DataAnnotations;
 
 namespace Domain.ProjectManagers
@@ -18,6 +19,8 @@ namespace Domain.ProjectManagers
         public DateOnly DateOfBirth { get; protected set; }
         public List<Project> Projects { get; protected set; } = [];
         public List<Programmer> Employees { get; protected set; } = [];
+        [DefaultValue(false)]
+        public bool isArchived { get; set; } = false;
 
         public static ProjectManager Create(
             string name,
@@ -38,6 +41,13 @@ namespace Domain.ProjectManagers
                 DateOfBirth = dateOfBirth,
                 Employees = employees ?? []
             };
+        }
+
+        public void Delete()
+        {
+            Projects.Clear();
+            Employees.Clear();
+            isArchived = true;
         }
     }
 }

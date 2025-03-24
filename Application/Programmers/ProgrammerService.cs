@@ -32,9 +32,9 @@ namespace Application.Programmers
             _uow = uow;
         }
 
-        public async Task<List<ProgrammerListDTO>> ListProgrammersAsync()
+        public async Task<List<ProgrammerListDTO>> ListProgrammersAsync(bool isAvaiable)
         {
-            var programmers = await _programmerRepo.ListProgrammersAsync(new ProgrammerAvailableSpec(true));
+            var programmers = await _programmerRepo.ListProgrammersAsync(new ProgrammerAvailableSpec(isAvaiable));
             return programmers.Adapt<List<ProgrammerListDTO>>();
         }
 
