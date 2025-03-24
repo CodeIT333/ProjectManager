@@ -14,7 +14,7 @@ namespace Application.Programmers.Specs
 
         public override Expression<Func<Programmer, bool>> ToExpressAll()
         {
-            return programmer => programmer.isArchived != _isAvailable;
+            return programmer => programmer.IsArchived != _isAvailable;
         }
     }
 }

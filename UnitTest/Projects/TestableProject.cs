@@ -16,7 +16,7 @@ namespace UnitTest.Projects
             Description = description;
         }
 
-        public void setProgrammerProjects(List<ProgrammerProject> programmerProjects)
+        public void SetProgrammerProjects(List<ProgrammerProject> programmerProjects)
         {
             ProgrammerProjects = programmerProjects;
         }

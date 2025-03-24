@@ -137,7 +137,7 @@ namespace Application.Programmers
 
             if (programmer.ProgrammerProjects.Any())
             {
-                foreach (var programmerProject in programmer.ProgrammerProjects)
+                foreach (var programmerProject in programmer.ProgrammerProjects.ToList())
                 {
                     // projects
                     programmerProject.Project.ProgrammerProjects.Remove(programmerProject);
