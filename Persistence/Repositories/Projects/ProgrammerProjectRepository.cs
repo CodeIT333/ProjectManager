@@ -13,5 +13,8 @@ namespace Persistence.Repositories.Projects
 
         public async Task CreateProgrammerProjectAsync(ProgrammerProject programmerProject) => 
             await _dbContext.ProgrammerProjects.AddAsync(programmerProject);
+
+        public void DeleteProgrammerProject(ProgrammerProject programmerProject) => 
+            _dbContext.ProgrammerProjects.Remove(programmerProject);
     }
 }

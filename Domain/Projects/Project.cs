@@ -36,7 +36,6 @@ namespace Domain.Projects
 
         public void Update(
             ProjectManager projectManager,
-            List<ProgrammerProject>? programmerProjects,
             Customer customer,
             string description
             )
@@ -46,7 +45,6 @@ namespace Domain.Projects
                 ProjectManager = projectManager;
                 ProjectManagerId = projectManager.Id;
             }
-            if (programmerProjects is not null && programmerProjects.Any()) ProgrammerProjects = programmerProjects;
             if (customer.Id != CustomerId)
             {
                 Customer = customer;

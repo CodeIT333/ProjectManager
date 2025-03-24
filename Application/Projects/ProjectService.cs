@@ -123,33 +123,45 @@ namespace Application.Projects
                     programmers.Add(programmer);
                 }
             }
-            // TODO programmerProjects
-            //programmers.ForEach(p => p.ProgrammerProjects.Add(ProgrammerProject.Create(project, p)));
-            // programmers to add | programmers to remove
             
-            var programmersToAdd = programmers.Where(p => !project.ProgrammerProjects.Any(pp => pp.ProgrammerId == p.Id)).ToList();
-            var programmersToRemove = project.ProgrammerProjects.Where(pp => !programmers.Any(p => p.Id == pp.ProgrammerId)).ToList();
-
-
-
-
-
-            List<ProgrammerProject> programmerProjects = new();
-            foreach (var programmer in programmers)
+            if (programmers.Any())
             {
-                var programmerProject = ProgrammerProject.Create(project, programmer);
-                await _programmerProjectRepo.CreateProgrammerProjectAsync(programmerProject);
-                await _uow.CommitAsync();
+                // add
+                var programmersToAdd = programmers.Except(project.ProgrammerProjects.Select(pp => pp.Programmer)).ToList();
+                var programmerProjectsToAdd = new List<ProgrammerProject>();
+                foreach (var programmer in programmersToAdd)
+                {
+                    var programmerProject = ProgrammerProject.Create(project, programmer);
+                    await _programmerProjectRepo.CreateProgrammerProjectAsync(programmerProject);
+                    await _uow.CommitAsync();
 
-                programmer.ProgrammerProjects.Add(programmerProject);
+                    programmerProjectsToAdd.Add(programmerProject);
+                }
+                
+                if (programmerProjectsToAdd.Any()) 
+                    project.ProgrammerProjects.AddRange(programmerProjectsToAdd);
+
+                // remove
+                var programmersToRemove = project.ProgrammerProjects.Where(pp => !programmers.Contains(pp.Programmer)).ToList();
+                var programmerProjectsToRemove = new List<ProgrammerProject>();
+                foreach (var programmer in programmersToRemove)
+                {
+                    project.ProgrammerProjects.Remove(programmer);
+                    programmerProjectsToRemove.Add(programmer);
+                }
+
+                if (programmerProjectsToRemove.Any())
+                    programmerProjectsToRemove.ForEach(pp => _programmerProjectRepo.DeleteProgrammerProject(pp));
             }
-
-            project.ProgrammerProjects.AddRange(programmerProjects);
-            await _uow.CommitAsync();
+            else
+            {
+                // remove all
+                project.ProgrammerProjects.ForEach(pp => _programmerProjectRepo.DeleteProgrammerProject(pp));
+                project.ProgrammerProjects.Clear();
+            }
 
             project.Update(
                 projectManager, 
-                programmerProjects,
                 customer, 
                 dto.description);
 
