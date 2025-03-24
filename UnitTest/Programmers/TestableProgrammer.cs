@@ -17,7 +17,7 @@ namespace UnitTest.Programmers
             ProjectManager = manager;
         }
 
-        public TestableProgrammer(string name, string phone, string email, ProgrammerRole role, bool isIntern, Address address)
+        public TestableProgrammer(string name, string phone, string email, ProgrammerRole role, bool isIntern, Address address, ProjectManager? manager = null)
         {
             Name = name;
             Phone = phone;
@@ -25,6 +25,8 @@ namespace UnitTest.Programmers
             Role = role;
             IsIntern = isIntern;
             Address = address;
+            ProjectManagerId = manager?.Id;
+            ProjectManager = manager;
         }
     }
 }

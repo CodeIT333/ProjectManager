@@ -6,7 +6,6 @@ using Application.ProjectManagers;
 using Application.ProjectManagers.DTOs;
 using Application.ProjectManagers.Specs;
 using Application.Projects;
-using Domain.Commons;
 using Domain.Programmers;
 using Domain.ProjectManagers;
 using Domain.Projects;
