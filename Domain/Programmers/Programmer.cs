@@ -22,7 +22,7 @@ namespace Domain.Programmers
         public ProjectManager? ProjectManager { get; protected set; }
         public ProgrammerRole Role { get; protected set; }
         public bool IsIntern { get; protected set; }
-        [DefaultValue(true)]
+        [DefaultValue(false)]
         public bool IsArchived { get; protected set; } = false;
 
         public static Programmer Create(
@@ -78,6 +78,12 @@ namespace Domain.Programmers
             ProjectManager = null;
             ProjectManagerId = null;
             ProgrammerProjects.Clear();
+        }
+
+        public void RemoveProjectManager()
+        {
+            ProjectManager = null;
+            ProjectManagerId = null;
         }
     }
 }

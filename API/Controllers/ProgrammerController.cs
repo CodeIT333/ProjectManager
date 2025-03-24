@@ -20,10 +20,10 @@ namespace API.Controllers
         }
 
         [HttpGet]
-        [SwaggerResponse(200, Type = typeof(List<ProgrammerListDTO>))] // or ProducesResponseType
-        public async Task<ActionResult<List<ProgrammerListDTO>>> ListProgrammersAsync()
+        [SwaggerResponse(200, Type = typeof(List<ProgrammerListDTO>))]
+        public async Task<ActionResult<List<ProgrammerListDTO>>> ListProgrammersAsync([FromQuery] bool isAvaiable)
         {
-            var data = await _programmerService.ListProgrammersAsync();
+            var data = await _programmerService.ListProgrammersAsync(isAvaiable);
             return Ok(data);
         }
 
