@@ -104,7 +104,6 @@ namespace Application.Programmers
                 dto.address.door
             );
 
-            // check if the added pm id is valid
             ProjectManager? newProgrammerProjectManager = null;
             if (dto.projectManagerId is not null && dto.projectManagerId.HasValue && dto.projectManagerId.Value != Guid.Empty)
             {
@@ -114,7 +113,6 @@ namespace Application.Programmers
                     throw new NotFoundException(ErrorMessages.NOT_FOUND_PROJECT_MANAGER);
             }
 
-            // if the new is not the same as the previous pm, remove the programmer from the previous pm employee list
             if (newProgrammerProjectManager is not null && programmer.ProjectManagerId != newProgrammerProjectManager.Id)
             {
                 if (programmer.ProjectManager is not null)
