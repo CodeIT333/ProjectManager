@@ -196,21 +196,14 @@ namespace UnitTest.ProjectManagers
         }
 
         /*--------------------------------------------------------Create-------------------------------------------------------*/
-        /*
-        [Theory]
-        [InlineData(false, false)] // success
-        [InlineData(true, false)]  // email already taken
-        [InlineData(false, true)]  // programmer not found
-        public async Task CreateProjectManagerAsync_HandlesDifferentScenarios(bool isEmailTaken, bool isProgrammerNotFound)
+        [Fact]
+        public async Task CreateProjectManagerWithEmployees_ReturnsOk()
         {
-            var projectManagerEmail = "pm@example.com";
-            var projectManagerId = Guid.NewGuid();
-            var validProgrammerIds = new List<Guid> { Guid.NewGuid() };
-
+            var programmer = new TestableProgrammer("John Doe", "06201234567", "john@example.com", ProgrammerRole.FullStack, false);
             var dto = new ProjectManagerCreateDTO
             {
                 name = "New PM",
-                email = projectManagerEmail,
+                email = "pm@gmail.com",
                 phone = "06101234567",
                 address = new AddressDTO
                 {
@@ -223,47 +216,30 @@ namespace UnitTest.ProjectManagers
                     door = 1
                 },
                 dateOfBirth = new DateOnly(1980, 8, 15),
-                employeeIds = isProgrammerNotFound ? new List<Guid> { Guid.NewGuid() } : validProgrammerIds
+                employeeIds = new List<Guid> { programmer.Id }
             };
 
-            // mock another pm with same email
-            _mockProjectManagerRepo.Setup(repo => repo.GetProjectManagerAsync(It.IsAny<ProjectManagerEmailSpec>()))
-                .ReturnsAsync(isEmailTaken ? new TestableProjectManager("Existing Manager", "0610111222", projectManagerEmail) : null);
+            var programmerWithTakenEmailMockSpec = new Mock<ISpecification<Programmer>>();
+            programmerWithTakenEmailMockSpec.Setup(spec => spec.ToExpressAll()).Returns(p => p.Email == dto.email && !p.IsArchived);
+            var projectMockSpec = new Mock<ISpecification<Project>>();
+            projectMockSpec.Setup(spec => spec.ToExpressAll()).Returns(p => p.Id == p.Id && !p.IsArchived);
 
-            _mockProjectManagerRepo.Setup(repo => repo.GetProjectManagerAsync(It.IsAny<ProjectManagerIdSpec>()))
-                .ReturnsAsync(new TestableProjectManager("Existing Manager", "0610111222", projectManagerEmail));
+            _mockProjectManagerRepo.Setup(repo => repo.GetProjectManagerAsync(It.IsAny<Specification<ProjectManager>>())).ReturnsAsync((ProjectManager?)null);
+            _mockProgrammerRepo.Setup(repo => repo.GetProgrammerAsync(It.IsAny<Specification<Programmer>>())).ReturnsAsync(programmer);
 
-            _mockProgrammerRepo.Setup(repo => repo.GetProgrammerAsync(It.IsAny<ProgrammerIdSpec>()))
-                .ReturnsAsync((ProgrammerIdSpec spec) =>
-                {
-                    return validProgrammerIds.Contains(dto.employeeIds.FirstOrDefault()) ?
-                        new TestableProgrammer("Test Programmer", "06201234567", "programmer@example.com", ProgrammerRole.FullStack, false) :
-                        null;
-                });
+            await _service.CreateProjectManagerAsync(dto);
 
-            if (isEmailTaken)
-            {
-                await FluentActions.Invoking(() => _service.CreateProjectManagerAsync(dto))
-                    .Should()
-                    .ThrowAsync<BadRequestException>()
-                    .WithMessage(ErrorMessages.TAKEN_PROJECT_MANAGER_EMAIL);
-            }
-            else if (isProgrammerNotFound)
-            {
-                await FluentActions.Invoking(() => _service.CreateProjectManagerAsync(dto))
-                    .Should()
-                    .ThrowAsync<NotFoundException>()
-                    .WithMessage(ErrorMessages.NOT_FOUND_PROGRAMMER);
-            }
-            else
-            {
-                await _service.CreateProjectManagerAsync(dto);
+            programmer.ProjectManager.Should().NotBeNull();
+            programmer.ProjectManager.Name.Should().Be(dto.name);
+            programmer.ProjectManager.Email.Should().Be(dto.email);
+            programmer.ProjectManager.Phone.Should().Be(dto.phone);
+            programmer.ProjectManager.DateOfBirth.Should().Be(dto.dateOfBirth);
+            programmer.ProjectManager.IsArchived.Should().Be(false);
+            programmer.ProjectManager.Address.Street.Should().Be(dto.address.street);
+            programmer.ProjectManager.Employees.Should().Contain(programmer);
 
-                _mockProjectManagerRepo.Verify(repo => repo.CreateProjectManagerAsync(It.IsAny<ProjectManager>()), Times.Once);
-                _mockUnitOfWork.Verify(uow => uow.CommitAsync(It.IsAny<CancellationToken>()), Times.Once);
-            }
+            _mockUnitOfWork.Verify(uow => uow.CommitAsync(It.IsAny<CancellationToken>()), Times.Once);
         }
-        */
 
         /*--------------------------------------------------------Update-------------------------------------------------------*/
         [Fact]
