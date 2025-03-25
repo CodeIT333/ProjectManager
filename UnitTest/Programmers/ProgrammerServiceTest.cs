@@ -2,9 +2,7 @@ using Application.Commons;
 using Application.Commons.DTOs;
 using Application.Programmers;
 using Application.Programmers.DTOs;
-using Application.Programmers.Specs;
 using Application.ProjectManagers;
-using Application.ProjectManagers.Specs;
 using Application.Projects;
 using Domain.Commons;
 using Domain.Programmers;
@@ -244,6 +242,8 @@ namespace UnitTest.Programmers
             projectManager.Employees[0].Name.Should().Be(dto.name);
             projectManager.Employees[0].Email.Should().Be(dto.email);
             projectManager.Employees[0].Phone.Should().Be(dto.phone);
+            projectManager.Employees[0].IsIntern.Should().Be(dto.isIntern);
+            projectManager.Employees[0].IsArchived.Should().Be(false);
             projectManager.Employees[0].Address.Street.Should().Be(dto.address.street);
             projectManager.Employees[0].ProjectManagerId.Should().Be(dto.projectManagerId);
 
@@ -293,74 +293,60 @@ namespace UnitTest.Programmers
         }
 
         /*--------------------------------------------------------Update-------------------------------------------------------*/
-        /*
         [Fact]
-        public async Task UpdateProgrammerWithoutProjectManager_ReturnsOk()
+        public async Task UpgradeProgrammerWithProjectManager_ReturnsOk()
         {
-            // Arrange
-            var existingEmail = "existing@example.com";
-            var newEmail = "new@example.com";
-            var testAddress = new TestableAddress("USA", "12345", "SomeCounty", "SomeCity", "SomeStreet", "42");
-            var existingPm = new TestableProjectManager("PM1", "123456789", "pm1@example.com");
-            existingPm.SetEmployees(new List<Programmer>());
-
-            var existingProgrammer = new TestableProgrammer("John Doe", "987654321", existingEmail, ProgrammerRole.FullStack, false, testAddress, existingPm);
-            var anotherProgrammer = new TestableProgrammer("Other Name", "555555555", newEmail, ProgrammerRole.FullStack, false);
-            var programmerId = existingProgrammer.Id;
-            var newPm = new TestableProjectManager("PM2", "555555555", "pm2@example.com");
-            var projectManagerId = newPm.Id;
-
+            var previousProjectManager = new TestableProjectManager("Old manager", "06101234567", "old@gmail.com");
+            var programmer = new TestableProgrammer("John Doe", "06201234567", "john@example.com", ProgrammerRole.Backend, false,
+                new TestableAddress("Hungary", "6722", "Csongrád", "Szeged", "Kossuth Lajos sugárút", "26/B", 12), previousProjectManager);
+            previousProjectManager.SetEmployees(new List<Programmer> { programmer });
+            var newProjectManager = new TestableProjectManager("New manager", "06101234567", "new@gmail.com");
             var dto = new ProgrammerCreateUpdateDTO
             {
-                name = "John Updated",
-                email = newEmail,
-                phone = "987654321",
-                dateOfBirth = new DateOnly(1990, 1, 1),
+                name = "New name",
+                email = "new@example.com",
+                phone = "06201234567",
                 role = ProgrammerRole.FullStack,
                 isIntern = false,
                 address = new AddressDTO
                 {
-                    country = "USA",
-                    zipCode = "12345",
-                    county = "SomeCounty",
-                    settlement = "SomeCity",
-                    street = "SomeStreet",
-                    houseNumber = "42",
-                    door = null
+                    country = "Hungary",
+                    zipCode = "6722",
+                    county = "Csongrád",
+                    settlement = "Szökõkút",
+                    street = "Rágó utca",
+                    houseNumber = "33"
                 },
-                date = new DateOnly(1992, 8, 14),
-                role = ProgrammerRole.Backend,
-                isIntern = true,
-                projectManagerId = null,
-                projectManagerId = projectManagerId
+                dateOfBirth = new DateOnly(2000, 06, 22),
+                projectManagerId = newProjectManager.Id
             };
 
-            var mockData = programmer;
-            var mockSpec = new Mock<ISpecification<Programmer>>();
-            mockSpec.Setup(spec => spec.ToExpressAll()).Returns(p => p.Id == programmer.Id && p.Email != dto.email && !p.IsArchived);
+            var programmerMockSpec = new Mock<ISpecification<Programmer>>();
+            programmerMockSpec.Setup(spec => spec.ToExpressAll()).Returns(p => p.Id == programmer.Id && !p.IsArchived);
+            var programmerWithTakenEmailMockSpec = new Mock<ISpecification<Programmer>>();
+            programmerWithTakenEmailMockSpec.Setup(spec => spec.ToExpressAll()).Returns(p => p.Email == dto.email && !p.IsArchived);
+            var projectManagerMockSpec = new Mock<ISpecification<ProjectManager>>();
+            projectManagerMockSpec.Setup(spec => spec.ToExpressAll()).Returns(pm => pm.Id == dto.projectManagerId && !pm.IsArchived);
 
-            _mockProgrammerRepo.Setup(repo => repo.GetProgrammerAsync(It.IsAny<Specification<Programmer>>())).ReturnsAsync(mockData);
-            _mockProgrammerRepo.Setup(repo => repo.GetProgrammerAsync(It.IsAny<ProgrammerEmailSpec>())).ReturnsAsync((Programmer?)null);
+            _mockProgrammerRepo.Setup(repo => repo.GetProgrammerAsync(It.Is<Specification<Programmer>>(s => s.ToExpressAll().Compile()(programmer)))).ReturnsAsync(programmer);
+            _mockProgrammerRepo.Setup(repo => repo.GetProgrammerAsync(It.Is<Specification<Programmer>>(s => s.ToExpressAll().Compile()(programmer) == false))).ReturnsAsync((Programmer?)null);
+            _mockProjectManagerRepo.Setup(repo => repo.GetProjectManagerAsync(It.IsAny<Specification<ProjectManager>>())).ReturnsAsync(newProjectManager);
 
             await _service.UpdateProgrammerAsync(programmer.Id, dto);
 
-            programmer.Name.Should().Be("Updated Programmer");
-            programmer.Phone.Should().Be("06209998877");
-            programmer.Email.Should().Be("updated@example.com");
-            programmer.Role.Should().Be(ProgrammerRole.Backend);
-            programmer.IsIntern.Should().BeTrue();
-            programmer.Address!.Country.Should().Be("Hungary");
-            programmer.Address!.ZipCode.Should().Be("6722");
-            programmer.Address!.County.Should().Be("Csongrád");
-            programmer.Address!.Settlement.Should().Be("Szeged");
-            programmer.Address!.Street.Should().Be("Petõfi Sándor utca");
-            programmer.Address!.HouseNumber.Should().Be("20.");
-            programmer.Address!.Door.Should().Be(2);
-            programmer.ProjectManager.Should().BeNull();
+            programmer.ProjectManager.Should().Be(newProjectManager);
+            newProjectManager.Employees.Should().HaveCount(1);
+            programmer.Name.Should().Be(dto.name);
+            programmer.Email.Should().Be(dto.email);
+            programmer.Phone.Should().Be(dto.phone);
+            programmer.Role.Should().Be(dto.role);
+            programmer.IsIntern.Should().Be(dto.isIntern);
+            programmer.IsArchived.Should().Be(false);
+            programmer.DateOfBirth.Should().Be(dto.dateOfBirth);
+            programmer.Address.Street.Should().Be(dto.address.street);
 
             _mockUnitOfWork.Verify(uow => uow.CommitAsync(It.IsAny<CancellationToken>()), Times.Once);
         }
-        */
 
         /*--------------------------------------------------------Delete-------------------------------------------------------*/
         [Fact]
