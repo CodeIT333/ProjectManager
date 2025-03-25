@@ -5,7 +5,6 @@ using Application.ProjectManagers;
 using Application.Projects;
 using Application.Projects.DTOs;
 using Application.Projects.Specs;
-using Castle.Core.Resource;
 using Domain.Commons;
 using Domain.Customers;
 using Domain.Programmers;
@@ -229,6 +228,48 @@ namespace UnitTest.Projects
         }
 
         /*--------------------------------------------------------Create-------------------------------------------------------*/
+        [Fact]
+        public async Task CreateProjectWithProjectManagerAndProgrammers_ReturnsOk()
+        {
+            var projectManager = new TestableProjectManager("Manager", "06100000567", "pm@gmail.com", new DateOnly(1998, 5, 18),
+                new TestableAddress("Hungary", "6722", "Csongrád", "Szeged", "Bükk Kálmán utca", "22"));
+            var programmer = new TestableProgrammer("John Doe", "06201234567", "john@example.com", ProgrammerRole.FullStack, false,
+                new TestableAddress("Hungary", "6722", "Csongrád", "Szökőkút", "Alanyos Kálmán utca", "6/C", 2), projectManager);
+            var customer = new TestableCustomer("Acme Corp", "06501234566", "newcorp@acme.com");
+            var dto = new ProjectCreateUpdateDTO
+            {
+                description = "Created project description",
+                projectManagerId = projectManager.Id,
+                customerId = customer.Id,
+                programmerIds = new List<Guid>() { programmer.Id }
+            };
+
+            var projectManagerMockSpec = new Mock<ISpecification<ProjectManager>>();
+            projectManagerMockSpec.Setup(spec => spec.ToExpressAll()).Returns(pm => pm.Id == dto.projectManagerId && !pm.IsArchived);
+            var customerMockSpec = new Mock<ISpecification<Customer>>();
+            customerMockSpec.Setup(spec => spec.ToExpressAll()).Returns(c => c.Id == customer.Id);
+            var programmerManagerMockSpec = new Mock<ISpecification<Programmer>>();
+            programmerManagerMockSpec.Setup(spec => spec.ToExpressAll()).Returns(p => p.Id == programmer.Id && !p.IsArchived);
+
+            _mockProjectManagerRepo.Setup(repo => repo.GetProjectManagerAsync(It.IsAny<Specification<ProjectManager>>())).ReturnsAsync(projectManager);
+            _mockCustomerRepo.Setup(repo => repo.GetCustomerAsync(It.IsAny<Guid>())).ReturnsAsync(customer);
+            _mockProgrammerRepo.Setup(repo => repo.GetProgrammerAsync(It.IsAny<Specification<Programmer>>())).ReturnsAsync(programmer);
+
+            await _service.CreateProjectAsync(dto);
+
+            programmer.ProgrammerProjects.Should().HaveCount(1);
+            programmer.ProgrammerProjects[0].Project.Description.Should().Be(dto.description);
+            projectManager.Projects.Should().HaveCount(1);
+            projectManager.Projects[0].Customer.Should().Be(customer);
+            projectManager.Projects[0].ProjectManager.Should().Be(projectManager);
+            projectManager.Projects[0].ProgrammerProjects.Should().NotBeEmpty();
+            projectManager.Projects[0].ProgrammerProjects.Should().HaveCount(1);
+            projectManager.Projects[0].ProgrammerProjects[0].Programmer.Should().Be(programmer);
+            projectManager.Projects[0].Description.Should().Be(dto.description);
+
+            _mockUnitOfWork.Verify(uow => uow.CommitAsync(It.IsAny<CancellationToken>()), Times.Exactly(2));
+        }
+
         /*
         [Theory]
         [InlineData(false, false, false)] // success
