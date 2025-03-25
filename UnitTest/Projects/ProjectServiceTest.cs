@@ -1,12 +1,12 @@
 ﻿using Application.Commons;
 using Application.Customers;
 using Application.Programmers;
-using Application.Programmers.Specs;
 using Application.ProjectManagers;
-using Application.ProjectManagers.Specs;
 using Application.Projects;
-using Application.Projects.DTOs;
+using Application.Projects.Specs;
+using Domain.Commons;
 using Domain.Programmers;
+using Domain.ProjectManagers;
 using Domain.Projects;
 using FluentAssertions;
 using Infrastructure.Exceptions;
@@ -81,9 +81,9 @@ namespace UnitTest.Projects
 
             var mockData = new List<Project> { project1, project2 };
 
-            _mockProjectRepo.Setup(repo => repo.ListProjectsAsync()).ReturnsAsync(mockData);
+            _mockProjectRepo.Setup(repo => repo.ListProjectsAsync(It.IsAny<Specification<Project>>())).ReturnsAsync(mockData);
 
-            var result = await _service.ListProjectsAsync();
+            var result = await _service.ListProjectsAsync(true);
 
             result.Should().NotBeNull();
             result.Should().HaveCount(2);
@@ -99,13 +99,37 @@ namespace UnitTest.Projects
         }
 
         [Fact]
+        public async Task ListProjects_ReturnsListOfArchivedProjects()
+        {
+            var project = new TestableProject(
+                null,
+                null,
+                new DateOnly(2024, 3, 18),
+                "Project description 1",
+                true
+            );
+
+            var mockData = new List<Project> { project };
+
+            _mockProjectRepo.Setup(repo => repo.ListProjectsAsync(It.IsAny<Specification<Project>>())).ReturnsAsync(mockData);
+            var result = await _service.ListProjectsAsync(false);
+
+            result.Should().NotBeNull();
+            result.Should().HaveCount(1);
+
+            result[0].customerName.Should().BeNull();
+            result[0].projectManagerName.Should().BeNull();
+            result[0].description.Should().Be("Project description 1");
+        }
+
+        [Fact]
         public async Task ListProjects_ReturnsEmptyList()
         {
             var mockData = new List<Project>();
 
-            _mockProjectRepo.Setup(repo => repo.ListProjectsAsync()).ReturnsAsync(mockData);
+            _mockProjectRepo.Setup(repo => repo.ListProjectsAsync(It.IsAny<Specification<Project>>())).ReturnsAsync(mockData);
 
-            var result = await _service.ListProjectsAsync();
+            var result = await _service.ListProjectsAsync(true);
 
             result.Should().BeEmpty();
         }
@@ -131,7 +155,11 @@ namespace UnitTest.Projects
             var programmerProject2 = new TestableProgrammerProject(programmer2, project);
             project.SetProgrammerProjects(new List<ProgrammerProject> { programmerProject1, programmerProject2 });
 
-            _mockProjectRepo.Setup(repo => repo.GetProjectAsync(project.Id)).ReturnsAsync(project);
+            var mockData = project;
+            var mockSpec = new Mock<ISpecification<ProjectManager>>();
+            mockSpec.Setup(spec => spec.ToExpressAll()).Returns(p => p.Id == project.Id && !p.IsArchived);
+
+            _mockProjectRepo.Setup(repo => repo.GetProjectAsync(It.IsAny<Specification<Project>>())).ReturnsAsync(mockData);
 
             var result = await _service.GetProjectAsync(project.Id);
 
@@ -169,7 +197,11 @@ namespace UnitTest.Projects
                 "Project without programmers"
             );
 
-            _mockProjectRepo.Setup(repo => repo.GetProjectAsync(project.Id)).ReturnsAsync(project);
+            var mockData = project;
+            var mockSpec = new Mock<ISpecification<ProjectManager>>();
+            mockSpec.Setup(spec => spec.ToExpressAll()).Returns(p => p.Id == project.Id && !p.IsArchived);
+
+            _mockProjectRepo.Setup(repo => repo.GetProjectAsync(It.IsAny<Specification<Project>>())).ReturnsAsync(mockData);
 
             await FluentActions
                 .Invoking(() => _service.GetProjectAsync(project.Id))
@@ -184,7 +216,7 @@ namespace UnitTest.Projects
             var notExistingId = Guid.NewGuid();
             var mockData = (TestableProject?)null;
 
-            _mockProjectRepo.Setup(repo => repo.GetProjectAsync(notExistingId)).ReturnsAsync(mockData);
+            _mockProjectRepo.Setup(repo => repo.GetProjectAsync(new ProjectIdSpec(notExistingId))).ReturnsAsync(mockData);
 
             await FluentActions
                 .Invoking(() => _service.GetProjectAsync(notExistingId))
@@ -255,5 +287,92 @@ namespace UnitTest.Projects
             }
         }
         */
+
+        /*--------------------------------------------------------Delete-------------------------------------------------------*/
+        [Fact]
+        public async Task DeleteProjectWithoutProjectManagerAndCustomerAndProgrammersRelation_ReturnsOk()
+        {
+            var project = new TestableProject(
+                null,
+                null,
+                new DateOnly(2024, 3, 18),
+                "Project without anything"
+            );
+
+            var mockData = project;
+            var mockSpec = new Mock<ISpecification<ProjectManager>>();
+            mockSpec.Setup(spec => spec.ToExpressAll()).Returns(p => p.Id == project.Id && !p.IsArchived);
+
+            _mockProjectRepo.Setup(repo => repo.GetProjectAsync(It.IsAny<Specification<Project>>())).ReturnsAsync(mockData);
+
+            await _service.DeleteProjectAsync(project.Id);
+
+            project.IsArchived.Should().BeTrue();
+            project.Description.Should().Be("Project without anything");
+
+            _mockUnitOfWork.Verify(uow => uow.CommitAsync(It.IsAny<CancellationToken>()), Times.Once);
+        }
+
+        [Fact]
+        public async Task DeleteProjectWithProjectManagerAndCustomerAndProgrammersRelation_ReturnsOk()
+        {
+            var programmer1 = new TestableProgrammer("John Doe", "06201234567", "john@example.com", ProgrammerRole.FullStack, false);
+            var programmer2 = new TestableProgrammer("Jane Smith", "06207654321", "jane@example.com", ProgrammerRole.Backend, true);
+            var projectManager = new TestableProjectManager("Alice Johnson", "06101234567", "alice@gmail.com");
+            var customer = new TestableCustomer("Acme Corp", "06501234566", "project@acme.com");
+            var project = new TestableProject(
+                projectManager,
+                customer,
+                new DateOnly(2024, 3, 18),
+                "Project"
+            );
+            var programmerProject1 = new TestableProgrammerProject(programmer1, project);
+            var programmerProject2 = new TestableProgrammerProject(programmer2, project);
+            programmer1.SetProgrammerProjects(new List<ProgrammerProject> { programmerProject1 });
+            programmer2.SetProgrammerProjects(new List<ProgrammerProject> { programmerProject2 });
+            project.SetProgrammerProjects(new List<ProgrammerProject> { programmerProject1, programmerProject2 });
+
+            var mockData = project;
+            var mockSpec = new Mock<ISpecification<ProjectManager>>();
+            mockSpec.Setup(spec => spec.ToExpressAll()).Returns(p => p.Id == project.Id && !p.IsArchived);
+
+            _mockProjectRepo.Setup(repo => repo.GetProjectAsync(It.IsAny<Specification<Project>>())).ReturnsAsync(mockData);
+
+            await _service.DeleteProjectAsync(project.Id);
+
+            project.IsArchived.Should().BeTrue();
+            project.Customer.Should().BeNull();
+            project.ProjectManager.Should().BeNull();
+            project.ProgrammerProjects.Should().BeEmpty();
+            project.Description.Should().Be("Project");
+
+            programmer1.ProgrammerProjects.Should().BeEmpty();
+            programmer2.ProgrammerProjects.Should().BeEmpty();
+
+            _mockUnitOfWork.Verify(uow => uow.CommitAsync(It.IsAny<CancellationToken>()), Times.Once);
+        }
+
+        [Fact]
+        public async Task DeleteProject_Returns404Exception()
+        {
+            var project = new TestableProject(
+                null,
+                null,
+                new DateOnly(2024, 3, 18),
+                "Project"
+            );
+
+            var mockData = (TestableProject?)null;
+            var mockSpec = new Mock<ISpecification<ProjectManager>>();
+            mockSpec.Setup(spec => spec.ToExpressAll()).Returns(p => p.Id == project.Id && !p.IsArchived);
+
+            _mockProjectRepo.Setup(repo => repo.GetProjectAsync(It.IsAny<Specification<Project>>())).ReturnsAsync(mockData);
+
+            await FluentActions
+                .Invoking(() => _service.DeleteProjectAsync(project.Id))
+                .Should()
+                .ThrowAsync<NotFoundException>()
+                .WithMessage(ErrorMessages.NOT_FOUND_PROJECT);
+        }
     }
 }
