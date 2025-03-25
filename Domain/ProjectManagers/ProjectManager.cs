@@ -48,7 +48,8 @@ namespace Domain.ProjectManagers
             string email,
             string phone,
             DateOnly dateOfBirth,
-            List<Programmer>? employees
+            List<Programmer>? employees,
+            List<Project> projects
             )
         {
             if (Name != name) Name = name;
@@ -56,6 +57,7 @@ namespace Domain.ProjectManagers
             if (Phone != phone) Phone = phone;
             if (DateOfBirth != dateOfBirth) DateOfBirth = dateOfBirth;
             if (employees is not null) Employees = employees;
+            if (projects is not null) Projects = projects;
         }
 
         public void Delete()

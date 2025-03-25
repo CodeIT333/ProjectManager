@@ -274,7 +274,17 @@ namespace UnitTest.ProjectManagers
                 new TestableAddress("Hungary", "6722", "Csongrád", "Szeged", "Bükk Kálmán utca", "26/B", 12));
             var previousProgrammer = new TestableProgrammer("Previous", "06201234567", "john@example.com", ProgrammerRole.FullStack, false, projectManager);
             projectManager.SetEmployees(new List<Programmer> { previousProgrammer });
-
+            var newProject = new TestableProject(
+                null,
+                new TestableCustomer("Acme Corp", "00000", "acme@gmail.com"),
+                new DateOnly(2025, 03, 22),
+                "Previous project");
+            var previousProject = new TestableProject(
+                projectManager,
+                new TestableCustomer("New Corp", "00000", "new@gmail.com"),
+                new DateOnly(2025, 03, 22),
+                "New project");
+            projectManager.SetProjects(new List<Project> { previousProject });
             var dto = new ProjectManagerUpdateDTO
             {
                 name = "New Name",
@@ -291,16 +301,19 @@ namespace UnitTest.ProjectManagers
                     door = 1
                 },
                 dateOfBirth = new DateOnly(1980, 8, 15),
-                projectIds = null,
+                projectIds = new List<Guid> { newProject.Id },
                 employeeIds = new List<Guid> { newProgrammer.Id }
             };
 
             var pmMockSpec = new Mock<ISpecification<ProjectManager>>();
             pmMockSpec.Setup(spec => spec.ToExpressAll()).Returns(pm => pm.Id == projectManager.Id && !pm.IsArchived);
-            var pMockSpec = new Mock<ISpecification<Programmer>>();
-            pMockSpec.Setup(spec => spec.ToExpressAll()).Returns(p => p.Id == newProgrammer.Id && !newProgrammer.IsArchived);
+            var projectMockSpec = new Mock<ISpecification<Project>>();
+            projectMockSpec.Setup(spec => spec.ToExpressAll()).Returns(p => p.Id == newProject.Id && !newProject.IsArchived);
+            var programmerMockSpec = new Mock<ISpecification<Programmer>>();
+            programmerMockSpec.Setup(spec => spec.ToExpressAll()).Returns(p => p.Id == newProgrammer.Id && !newProgrammer.IsArchived);
 
             _mockProjectManagerRepo.Setup(repo => repo.GetProjectManagerAsync(It.IsAny<Specification<ProjectManager>>())).ReturnsAsync(projectManager);
+            _mockProjectRepo.Setup(repo => repo.GetProjectAsync(It.IsAny<Specification<Project>>())).ReturnsAsync(newProject);
             _mockProgrammerRepo.Setup(repo => repo.GetProgrammerAsync(It.IsAny<Specification<Programmer>>())).ReturnsAsync(newProgrammer);
 
             await _service.UpdateProjectManagerAsync(projectManager.Id, dto);
@@ -310,8 +323,11 @@ namespace UnitTest.ProjectManagers
             projectManager.DateOfBirth.Should().Be(new DateOnly(1980, 8, 15));
             projectManager.Employees.Should().Contain(newProgrammer);
             projectManager.Employees.Should().NotContain(previousProgrammer);
+            projectManager.Projects.Should().Contain(newProject);
+            projectManager.Projects.Should().NotContain(previousProject);
 
-            previousProgrammer.ProjectManager.Should().Be(projectManager);
+            previousProgrammer.ProjectManager.Should().BeNull();
+            previousProgrammer.ProjectManager.Should().NotBe(projectManager);
             newProgrammer.ProjectManager.Should().Be(projectManager);
 
             _mockUnitOfWork.Verify(uow => uow.CommitAsync(It.IsAny<CancellationToken>()), Times.Once);

@@ -4,11 +4,14 @@ using Application.Programmers.Specs;
 using Application.ProjectManagers.DTOs;
 using Application.ProjectManagers.Specs;
 using Application.Projects;
+using Application.Projects.Specs;
 using Domain.Commons;
 using Domain.Programmers;
 using Domain.ProjectManagers;
+using Domain.Projects;
 using Infrastructure.Exceptions;
 using Mapster;
+using System.Diagnostics;
 
 namespace Application.ProjectManagers
 {
@@ -105,6 +108,34 @@ namespace Application.ProjectManagers
                 dto.address.door
             );
 
+            List<Project> projects = new();
+            if (dto.projectIds is not null && dto.projectIds.Any())
+            {
+                foreach (var projectId in dto.projectIds)
+                {
+                    var project = await _projectRepo.GetProjectAsync(new ProjectIdSpec(projectId).And(new ProjectIsAvailableSpec(true)));
+                    if (project is null)
+                        throw new NotFoundException(ErrorMessages.NOT_FOUND_PROJECT);
+
+                    projects.Add(project);
+                }
+            }
+            if (projects.Any())
+            {
+                var projectsToAdd = projects.Except(projectManager.Projects).ToList();
+                projectsToAdd.ForEach(p => p.SetProjectManager(projectManager));
+                projectManager.Projects.AddRange(projectsToAdd);
+
+                var projectsToRemove = projectManager.Projects.Except(projects).ToList();
+                projectsToRemove.ForEach(p => p.SetProjectManager(null));
+                projectManager.Projects.RemoveAll(p => projectsToRemove.Contains(p));
+            }
+            else
+            {
+                projectManager.Projects.ForEach(p => p.SetProjectManager(null));
+                projectManager.Projects.Clear();
+            }
+
             List<Programmer> programmers = new();
             if (dto.employeeIds is not null && dto.employeeIds.Any())
             {
@@ -115,25 +146,21 @@ namespace Application.ProjectManagers
                         throw new NotFoundException(ErrorMessages.NOT_FOUND_PROGRAMMER);
 
                     programmers.Add(programmer);
-                    programmer.UpdateProjectManager(projectManager);
                 }
             }
-
             if (programmers.Any())
             {
                 var programmersToAdd = programmers.Except(projectManager.Employees).ToList();
+                programmersToAdd.ForEach(p => p.SetProjectManager(projectManager));
                 projectManager.Employees.AddRange(programmersToAdd);
 
-                programmersToAdd.ForEach(p => p.UpdateProjectManager(projectManager));
-
                 var programmersToRemove = projectManager.Employees.Except(programmers).ToList();
-                programmersToRemove.ForEach(p => p.UpdateProjectManager(null));
-
                 projectManager.Employees.RemoveAll(p => programmersToRemove.Contains(p));   
+                programmersToRemove.ForEach(p => p.SetProjectManager(null));
             }
             else
             {
-                projectManager.Employees.ForEach(p => p.UpdateProjectManager(null));
+                projectManager.Employees.ForEach(p => p.SetProjectManager(null));
                 projectManager.Employees.Clear();
             }
 
@@ -142,7 +169,8 @@ namespace Application.ProjectManagers
                 dto.email,
                 dto.phone,
                 dto.dateOfBirth,
-                programmers
+                programmers,
+                projects
             );
 
             await _uow.CommitAsync();

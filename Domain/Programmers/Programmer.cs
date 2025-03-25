@@ -59,7 +59,7 @@ namespace Domain.Programmers
             bool isIntern,
             ProjectManager? manager)
         {
-            UpdateProjectManager(manager);
+            SetProjectManager(manager);
             if (Name != name) Name = name;
             if (Email != email) Email = email;
             if (Phone != phone) Phone = phone;
@@ -68,13 +68,10 @@ namespace Domain.Programmers
             if (IsIntern != isIntern) IsIntern = isIntern;
         }
 
-        public void UpdateProjectManager(ProjectManager? manager)
+        public void SetProjectManager(ProjectManager? manager)
         {
-            if (manager is not null && (ProjectManager is null || ProjectManager != manager))
-            {
-                ProjectManager = manager;
-                ProjectManagerId = manager.Id;
-            }
+            ProjectManager = manager;
+            ProjectManagerId = manager?.Id;
         }
 
         public void Delete()
