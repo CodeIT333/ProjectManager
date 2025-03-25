@@ -2,6 +2,7 @@
 using Domain.Customers;
 using Domain.ProjectManagers;
 using System.ComponentModel;
+using System.ComponentModel.DataAnnotations;
 
 namespace Domain.Projects
 {
@@ -13,6 +14,7 @@ namespace Domain.Projects
         public Guid? CustomerId { get; protected set; }
         public Customer? Customer { get; protected set; }
         public DateOnly StartDate { get; protected set; }
+        [MaxLength(10000)]
         public string Description { get; protected set; }
         [DefaultValue(false)]
         public bool IsArchived { get; protected set; } = false;
@@ -21,7 +23,7 @@ namespace Domain.Projects
             ProjectManager projectManager,
             Customer customer,
             string description
-        )
+            )
         {
             return new Project
             {
@@ -33,6 +35,18 @@ namespace Domain.Projects
                 StartDate = DateOnly.FromDateTime(DateTime.UtcNow),
                 Description = description
             };
+        }
+
+        public void Update(
+            ProjectManager? projectManager,
+            Customer? customer,
+            string description
+            )
+        {
+            SetProjectManager(projectManager);
+            Customer = customer;
+            CustomerId = customer?.Id;
+            if (description != Description) Description = description;   
         }
 
         public void Delete()

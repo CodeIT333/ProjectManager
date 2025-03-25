@@ -11,7 +11,6 @@ using Domain.ProjectManagers;
 using Domain.Projects;
 using Infrastructure.Exceptions;
 using Mapster;
-using System.Diagnostics;
 
 namespace Application.ProjectManagers
 {

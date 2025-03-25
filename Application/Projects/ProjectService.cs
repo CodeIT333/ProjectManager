@@ -57,7 +57,7 @@ namespace Application.Projects
             return project.Adapt<ProjectGetDTO>();
         }
 
-        public async Task CreateProjectAsync(ProjectCreateDTO dto)
+        public async Task CreateProjectAsync(ProjectCreateUpdateDTO dto)
         {
             var projectManager = await _projectManagerRepos.GetProjectManagerAsync(new ProjectManagerIdSpec(dto.projectManagerId).And(new ProjectManagerIsAvailableSpec(true)));
             if (projectManager is null)
@@ -95,6 +95,78 @@ namespace Application.Projects
             }
 
             project.ProgrammerProjects.AddRange(programmerProjects);
+            await _uow.CommitAsync();
+        }
+
+        public async Task UpdateProjectAsync(Guid id, ProjectCreateUpdateDTO dto)
+        {
+            var project = await _projectRepo.GetProjectAsync(new ProjectIdSpec(id).And(new ProjectIsAvailableSpec(true)));
+            if (project is null)
+                throw new NotFoundException(ErrorMessages.NOT_FOUND_PROJECT);
+
+            var projectManager = await _projectManagerRepos.GetProjectManagerAsync(
+                new ProjectManagerIdSpec(dto.projectManagerId).And(new ProjectManagerIsAvailableSpec(true)));
+            if (projectManager is null)
+                throw new NotFoundException(ErrorMessages.NOT_FOUND_PROJECT_MANAGER);
+
+            var customer = await _customerRepo.GetCustomerAsync(dto.customerId);
+            if (customer is null)
+                throw new NotFoundException(ErrorMessages.NOT_FOUND_CUSTOMER);
+
+            var programmers = new List<Programmer>();
+            if (dto.programmerIds is not null && dto.programmerIds.Any())
+            {
+                foreach (var programmerId in dto.programmerIds)
+                {
+                    var programmer = await _programmerRepo.GetProgrammerAsync(new ProgrammerIdSpec(programmerId).And(new ProgrammerIsAvailableSpec(true)));
+                    if (programmer is null)
+                        throw new NotFoundException(ErrorMessages.NOT_FOUND_PROGRAMMER);
+
+                    programmers.Add(programmer);
+                }
+            }
+            
+            if (programmers.Any())
+            {
+                // add
+                var programmersToAdd = programmers.Except(project.ProgrammerProjects.Select(pp => pp.Programmer)).ToList();
+                var programmerProjectsToAdd = new List<ProgrammerProject>();
+                foreach (var programmer in programmersToAdd)
+                {
+                    var programmerProject = ProgrammerProject.Create(project, programmer);
+                    await _programmerProjectRepo.CreateProgrammerProjectAsync(programmerProject);
+                    await _uow.CommitAsync();
+
+                    programmerProjectsToAdd.Add(programmerProject);
+                }
+                
+                if (programmerProjectsToAdd.Any()) 
+                    project.ProgrammerProjects.AddRange(programmerProjectsToAdd);
+
+                // remove
+                var programmersToRemove = project.ProgrammerProjects.Where(pp => !programmers.Contains(pp.Programmer)).ToList();
+                var programmerProjectsToRemove = new List<ProgrammerProject>();
+                foreach (var programmer in programmersToRemove)
+                {
+                    project.ProgrammerProjects.Remove(programmer);
+                    programmerProjectsToRemove.Add(programmer);
+                }
+
+                if (programmerProjectsToRemove.Any())
+                    programmerProjectsToRemove.ForEach(pp => _programmerProjectRepo.DeleteProgrammerProject(pp));
+            }
+            else
+            {
+                // remove all
+                project.ProgrammerProjects.ForEach(pp => _programmerProjectRepo.DeleteProgrammerProject(pp));
+                project.ProgrammerProjects.Clear();
+            }
+
+            project.Update(
+                projectManager, 
+                customer, 
+                dto.description);
+
             await _uow.CommitAsync();
         }
 

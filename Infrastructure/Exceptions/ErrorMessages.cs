@@ -39,6 +39,12 @@
         /*-----------------------------------------------Project--------------------------------------------*/
         public const string NOT_FOUND_PROJECT = "The project was not found.";
 
+        public const string REQUIRED_PROJECT_PROJECT_MANAGER = "The project's project manager is required.";
+        public const string REQUIRED_PROJECT_CUSTOMER = "The project customer is required.";
+        public const string REQUIRED_PROJECT_DESCRIPTION = "The project description is required.";
+
+        public const string TOO_LONG_PROJECT_DESCRIPTION = "The project description is too long.";
+
         /*-----------------------------------------------Customer--------------------------------------------*/
         public const string NOT_FOUND_CUSTOMER = "The customer was not found.";
 
