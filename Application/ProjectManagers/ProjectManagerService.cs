@@ -32,15 +32,15 @@ namespace Application.ProjectManagers
             _uow = uow;
         }
 
-        public async Task<List<ProjectManagerListDTO>> ListProjectManagersAsync()
+        public async Task<List<ProjectManagerListDTO>> ListProjectManagersAsync(bool isAvaiable)
         {
-            var projectManagers = await _projectManagerRepo.ListProjectManagersAsync();
+            var projectManagers = await _projectManagerRepo.ListProjectManagersAsync(new ProjectManagerIsAvailableSpec(isAvaiable));
             return projectManagers.Adapt<List<ProjectManagerListDTO>>();
         }
 
         public async Task<ProjectManagerGetDTO> GetProjectManagerAsync(Guid id)
         {
-            var projectManager = await _projectManagerRepo.GetProjectManagerAsync(new ProjectManagerIdSpec(id));
+            var projectManager = await _projectManagerRepo.GetProjectManagerAsync(new ProjectManagerIdSpec(id).And(new ProjectManagerIsAvailableSpec(true)));
             if (projectManager is null)
                 throw new NotFoundException(ErrorMessages.NOT_FOUND_PROJECT_MANAGER);
             
@@ -49,7 +49,7 @@ namespace Application.ProjectManagers
 
         public async Task CreateProjectManagerAsync(ProjectManagerCreateDTO dto)
         {
-            var existingProjectManager = await _projectManagerRepo.GetProjectManagerAsync(new ProjectManagerEmailSpec(dto.email));
+            var existingProjectManager = await _projectManagerRepo.GetProjectManagerAsync(new ProjectManagerEmailSpec(dto.email).And(new ProjectManagerIsAvailableSpec(true)));
             if (existingProjectManager is not null)
                 throw new BadRequestException(ErrorMessages.TAKEN_PROJECT_MANAGER_EMAIL);
 
@@ -68,7 +68,7 @@ namespace Application.ProjectManagers
             {
                 foreach (var employeeId in dto.employeeIds)
                 {
-                    var programmer = await _programmerRepo.GetProgrammerAsync(new ProgrammerIdSpec(employeeId));
+                    var programmer = await _programmerRepo.GetProgrammerAsync(new ProgrammerIdSpec(employeeId).And(new ProgrammerAvailableSpec(true)));
                     if (programmer is null)
                         throw new NotFoundException(ErrorMessages.NOT_FOUND_PROGRAMMER);
 
@@ -148,6 +148,23 @@ namespace Application.ProjectManagers
                 dto.dateOfBirth,
                 programmers
             );
+
+            await _uow.CommitAsync();
+        }
+
+        public async Task DeleteProjectManagerAsync(Guid id)
+        {
+            var projectManager = await _projectManagerRepo.GetProjectManagerAsync(new ProjectManagerIdSpec(id).And(new ProjectManagerIsAvailableSpec(true)));
+            if (projectManager is null)
+                throw new NotFoundException(ErrorMessages.NOT_FOUND_PROJECT_MANAGER);
+
+            if (projectManager.Projects.Any())
+                throw new BadRequestException(ErrorMessages.EXISTING_PROJECT_FOR_PROJECT_MANAGER);
+
+            if (projectManager.Employees.Any())
+                projectManager.Employees.ForEach(p => p.RemoveProjectManager());
+
+            projectManager.Delete();
 
             await _uow.CommitAsync();
         }

@@ -20,10 +20,10 @@ namespace API.Controllers
         }
 
         [HttpGet]
-        [SwaggerResponse(200, Type = typeof(List<ProgrammerListDTO>))] // or ProducesResponseType
-        public async Task<ActionResult<List<ProgrammerListDTO>>> ListProgrammersAsync()
+        [SwaggerResponse(200, Type = typeof(List<ProgrammerListDTO>))]
+        public async Task<ActionResult<List<ProgrammerListDTO>>> ListProgrammersAsync([FromQuery] bool isAvaiable)
         {
-            var data = await _programmerService.ListProgrammersAsync();
+            var data = await _programmerService.ListProgrammersAsync(isAvaiable);
             return Ok(data);
         }
 
@@ -53,6 +53,15 @@ namespace API.Controllers
         public async Task<ActionResult> UpdateProgrammerAsync(Guid id, [FromBody] ProgrammerCreateUpdateDTO dto)
         {
             await _programmerService.UpdateProgrammerAsync(id, dto);
+            return NoContent();
+        }
+
+        [HttpDelete("{id}")]
+        [SwaggerResponse(204)]
+        [SwaggerResponse(404, Type = typeof(ErrorResponse))]
+        public async Task<ActionResult> DeleteProgrammerAsync(Guid id)
+        {
+            await _programmerService.DeleteProgrammerAsync(id);
             return NoContent();
         }
     }

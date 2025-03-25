@@ -16,8 +16,8 @@ namespace Application.Projects.ProjectTypeMappings
                 .MapWith(src => new ProjectListDTO
                 {
                     id = src.Id,
-                    projectManagerName = src.ProjectManager.Name,
-                    customerName = src.Customer.Name,
+                    projectManagerName = src.ProjectManager != null ? src.ProjectManager.Name : null,
+                    customerName = src.Customer != null ? src.Customer.Name : null,
                     programmerNames = src.ProgrammerProjects.Select(pp => pp.Programmer.Name).ToList(),
                     startDate = src.StartDate,
                     description = src.Description
@@ -28,7 +28,7 @@ namespace Application.Projects.ProjectTypeMappings
                 .MapWith(src => new ProjectInProgrammerGetDTO
                 {
                     id = src.Id,
-                    projectManagerName = src.ProjectManager.Name,
+                    projectManagerName = src.ProjectManager!.Name,
                     startDate = src.StartDate,
                     description = src.Description
                 });
@@ -39,7 +39,7 @@ namespace Application.Projects.ProjectTypeMappings
                 {
                     projectId = src.Id,
                     projectDescription = src.Description,
-                    customerName = src.Customer.Name,
+                    customerName = src.Customer!.Name,
                     customerPhone = src.Customer.Phone,
                     customerEmail = src.Customer.Email
                 });

@@ -6,17 +6,19 @@ namespace UnitTest.Projects
 {
     internal class TestableProject : Project
     {
-        public TestableProject(ProjectManager manager, Customer customer, DateOnly startDate, string description)
+        public TestableProject(ProjectManager? manager, Customer? customer, DateOnly startDate, string description, bool isArchived = false)
         {
-            ProjectManagerId = manager.Id;
+            Id = Guid.NewGuid();
+            ProjectManagerId = manager?.Id;
             ProjectManager = manager;
-            CustomerId = customer.Id;
+            CustomerId = customer?.Id;
             Customer = customer;
             StartDate = startDate;
             Description = description;
+            IsArchived = isArchived;
         }
 
-        public void setProgrammerProjects(List<ProgrammerProject> programmerProjects)
+        public void SetProgrammerProjects(List<ProgrammerProject> programmerProjects)
         {
             ProgrammerProjects = programmerProjects;
         }

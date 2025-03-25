@@ -5,6 +5,7 @@ using Application.Programmers.Specs;
 using Application.ProjectManagers;
 using Application.ProjectManagers.Specs;
 using Application.Projects.DTOs;
+using Application.Projects.Specs;
 using Domain.Programmers;
 using Domain.Projects;
 using Infrastructure.Exceptions;
@@ -38,15 +39,15 @@ namespace Application.Projects
             _uow = uow;
         }
 
-        public async Task<List<ProjectListDTO>> ListProjectsAsync()
+        public async Task<List<ProjectListDTO>> ListProjectsAsync(bool isAvailable)
         {
-            var projects = await _projectRepo.ListProjectsAsync();
+            var projects = await _projectRepo.ListProjectsAsync(new ProjectIsAvailableSpec(isAvailable));
             return projects.Adapt<List<ProjectListDTO>>();
         }
 
         public async Task<ProjectGetDTO> GetProjectAsync(Guid id)
         {
-            var project = await _projectRepo.GetProjectAsync(id);
+            var project = await _projectRepo.GetProjectAsync(new ProjectIdSpec(id).And(new ProjectIsAvailableSpec(true)));
             if (project is null)
                 throw new NotFoundException(ErrorMessages.NOT_FOUND_PROJECT);
 
@@ -58,7 +59,7 @@ namespace Application.Projects
 
         public async Task CreateProjectAsync(ProjectCreateDTO dto)
         {
-            var projectManager = await _projectManagerRepos.GetProjectManagerAsync(new ProjectManagerIdSpec(dto.projectManagerId));
+            var projectManager = await _projectManagerRepos.GetProjectManagerAsync(new ProjectManagerIdSpec(dto.projectManagerId).And(new ProjectManagerIsAvailableSpec(true)));
             if (projectManager is null)
                 throw new NotFoundException(ErrorMessages.NOT_FOUND_PROJECT_MANAGER);
 
@@ -71,7 +72,7 @@ namespace Application.Projects
             {
                 foreach (var programmerId in dto.programmerIds)
                 {
-                    var programmer = await _programmerRepo.GetProgrammerAsync(new ProgrammerIdSpec(programmerId));
+                    var programmer = await _programmerRepo.GetProgrammerAsync(new ProgrammerIdSpec(programmerId).And(new ProgrammerAvailableSpec(true)));
                     if (programmer is null)
                         throw new NotFoundException(ErrorMessages.NOT_FOUND_PROGRAMMER);
 
@@ -94,6 +95,27 @@ namespace Application.Projects
             }
 
             project.ProgrammerProjects.AddRange(programmerProjects);
+            await _uow.CommitAsync();
+        }
+
+        public async Task DeleteProjectAsync(Guid id)
+        {
+            var project = await _projectRepo.GetProjectAsync(new ProjectIdSpec(id).And(new ProjectIsAvailableSpec(true)));
+            if (project is null)
+                throw new NotFoundException(ErrorMessages.NOT_FOUND_PROJECT);
+
+            if (project.ProgrammerProjects.Any())
+            {
+                foreach (var programmerProject in project.ProgrammerProjects.ToList())
+                {
+                    programmerProject.Programmer.ProgrammerProjects.Remove(programmerProject);
+                    project.ProgrammerProjects.Remove(programmerProject);
+                    _programmerProjectRepo.DeleteProgrammerProject(programmerProject);
+                } 
+            }
+
+            project.Delete();
+
             await _uow.CommitAsync();
         }
     }
