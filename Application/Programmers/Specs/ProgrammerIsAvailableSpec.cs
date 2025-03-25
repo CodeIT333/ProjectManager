@@ -4,10 +4,10 @@ using System.Linq.Expressions;
 
 namespace Application.Programmers.Specs
 {
-    public class ProgrammerAvailableSpec : Specification<Programmer>
+    public class ProgrammerIsAvailableSpec : Specification<Programmer>
     {
         private readonly bool _isAvailable;
-        public ProgrammerAvailableSpec(bool isAvailable)
+        public ProgrammerIsAvailableSpec(bool isAvailable)
         {
             _isAvailable = isAvailable;
         }

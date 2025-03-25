@@ -68,7 +68,7 @@ namespace Application.ProjectManagers
             {
                 foreach (var employeeId in dto.employeeIds)
                 {
-                    var programmer = await _programmerRepo.GetProgrammerAsync(new ProgrammerIdSpec(employeeId).And(new ProgrammerAvailableSpec(true)));
+                    var programmer = await _programmerRepo.GetProgrammerAsync(new ProgrammerIdSpec(employeeId).And(new ProgrammerIsAvailableSpec(true)));
                     if (programmer is null)
                         throw new NotFoundException(ErrorMessages.NOT_FOUND_PROGRAMMER);
 
@@ -91,7 +91,7 @@ namespace Application.ProjectManagers
 
         public async Task UpdateProjectManagerAsync(Guid id, ProjectManagerUpdateDTO dto)
         {
-            var projectManager = await _projectManagerRepo.GetProjectManagerAsync(new ProjectManagerIdSpec(id));
+            var projectManager = await _projectManagerRepo.GetProjectManagerAsync(new ProjectManagerIdSpec(id).And(new ProjectManagerIsAvailableSpec(true)));
             if (projectManager is null)
                 throw new NotFoundException(ErrorMessages.NOT_FOUND_PROJECT_MANAGER);
 
@@ -110,7 +110,7 @@ namespace Application.ProjectManagers
             {
                 foreach (var employeeId in dto.employeeIds)
                 {
-                    var programmer = await _programmerRepo.GetProgrammerAsync(new ProgrammerIdSpec(employeeId));
+                    var programmer = await _programmerRepo.GetProgrammerAsync(new ProgrammerIdSpec(employeeId).And(new ProgrammerIsAvailableSpec(true)));
                     if (programmer is null)
                         throw new NotFoundException(ErrorMessages.NOT_FOUND_PROGRAMMER);
 
@@ -121,13 +121,11 @@ namespace Application.ProjectManagers
 
             if (programmers.Any())
             {
-                // add
                 var programmersToAdd = programmers.Except(projectManager.Employees).ToList();
                 projectManager.Employees.AddRange(programmersToAdd);
 
                 programmersToAdd.ForEach(p => p.UpdateProjectManager(projectManager));
 
-                // remove
                 var programmersToRemove = projectManager.Employees.Except(programmers).ToList();
                 programmersToRemove.ForEach(p => p.UpdateProjectManager(null));
 
@@ -135,9 +133,7 @@ namespace Application.ProjectManagers
             }
             else
             {
-                // remove this pm from the connected programmers
                 projectManager.Employees.ForEach(p => p.UpdateProjectManager(null));
-                // remove all programmers from this pm
                 projectManager.Employees.Clear();
             }
 

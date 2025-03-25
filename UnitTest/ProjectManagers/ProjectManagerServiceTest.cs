@@ -1,6 +1,8 @@
 ﻿using Application.Commons;
+using Application.Commons.DTOs;
 using Application.Programmers;
 using Application.ProjectManagers;
+using Application.ProjectManagers.DTOs;
 using Application.ProjectManagers.Specs;
 using Application.Projects;
 using Domain.Commons;
@@ -10,6 +12,9 @@ using Domain.Projects;
 using FluentAssertions;
 using Infrastructure.Exceptions;
 using Moq;
+using System.Diagnostics.Metrics;
+using System.IO;
+using System.Reflection.Emit;
 using UnitTest.Commons;
 using UnitTest.Configurations;
 using UnitTest.Programmers;
@@ -260,6 +265,58 @@ namespace UnitTest.ProjectManagers
         }
         */
 
+        /*--------------------------------------------------------Update-------------------------------------------------------*/
+        [Fact]
+        public async Task UpdateProjectManagerWithProgrammer_ReturnsOk()
+        {
+            var newProgrammer = new TestableProgrammer("John Doe", "06201234567", "john@example.com", ProgrammerRole.FullStack, false);
+            var projectManager = new TestableProjectManager("Alice Johnson", "06101234567", "email@gmail.com", new DateOnly(1996,11,13), 
+                new TestableAddress("Hungary", "6722", "Csongrád", "Szeged", "Bükk Kálmán utca", "26/B", 12));
+            var previousProgrammer = new TestableProgrammer("Previous", "06201234567", "john@example.com", ProgrammerRole.FullStack, false, projectManager);
+            projectManager.SetEmployees(new List<Programmer> { previousProgrammer });
+
+            var dto = new ProjectManagerUpdateDTO
+            {
+                name = "New Name",
+                email = "email@gmail.com",
+                phone = "0000000999",
+                address = new AddressDTO
+                {
+                    country = "Hungary",
+                    zipCode = "6722",
+                    county = "Csongrád",
+                    settlement = "Szeged",
+                    street = "Kossuth Lajos sugárút",
+                    houseNumber = "15.",
+                    door = 1
+                },
+                dateOfBirth = new DateOnly(1980, 8, 15),
+                projectIds = null,
+                employeeIds = new List<Guid> { newProgrammer.Id }
+            };
+
+            var pmMockSpec = new Mock<ISpecification<ProjectManager>>();
+            pmMockSpec.Setup(spec => spec.ToExpressAll()).Returns(pm => pm.Id == projectManager.Id && !pm.IsArchived);
+            var pMockSpec = new Mock<ISpecification<Programmer>>();
+            pMockSpec.Setup(spec => spec.ToExpressAll()).Returns(p => p.Id == newProgrammer.Id && !newProgrammer.IsArchived);
+
+            _mockProjectManagerRepo.Setup(repo => repo.GetProjectManagerAsync(It.IsAny<Specification<ProjectManager>>())).ReturnsAsync(projectManager);
+            _mockProgrammerRepo.Setup(repo => repo.GetProgrammerAsync(It.IsAny<Specification<Programmer>>())).ReturnsAsync(newProgrammer);
+
+            await _service.UpdateProjectManagerAsync(projectManager.Id, dto);
+
+            projectManager.Name.Should().Be("New Name");
+            projectManager.Address.Street.Should().Be("Kossuth Lajos sugárút");
+            projectManager.DateOfBirth.Should().Be(new DateOnly(1980, 8, 15));
+            projectManager.Employees.Should().Contain(newProgrammer);
+            projectManager.Employees.Should().NotContain(previousProgrammer);
+
+            previousProgrammer.ProjectManager.Should().Be(projectManager);
+            newProgrammer.ProjectManager.Should().Be(projectManager);
+
+            _mockUnitOfWork.Verify(uow => uow.CommitAsync(It.IsAny<CancellationToken>()), Times.Once);
+        }
+        
         /*--------------------------------------------------------Delete-------------------------------------------------------*/
         [Fact]
         public async Task DeleteProjectManagerWithoutEmployeesAndProjectRelation_ReturnsOk()

@@ -34,13 +34,13 @@ namespace Application.Programmers
 
         public async Task<List<ProgrammerListDTO>> ListProgrammersAsync(bool isAvaiable)
         {
-            var programmers = await _programmerRepo.ListProgrammersAsync(new ProgrammerAvailableSpec(isAvaiable));
+            var programmers = await _programmerRepo.ListProgrammersAsync(new ProgrammerIsAvailableSpec(isAvaiable));
             return programmers.Adapt<List<ProgrammerListDTO>>();
         }
 
         public async Task<ProgrammerGetDTO> GetProgrammerAsync(Guid id)
         {
-            var programmer = await _programmerRepo.GetProgrammerAsync(new ProgrammerIdSpec(id).And(new ProgrammerAvailableSpec(true)));
+            var programmer = await _programmerRepo.GetProgrammerAsync(new ProgrammerIdSpec(id).And(new ProgrammerIsAvailableSpec(true)));
             if (programmer is null)
                 throw new NotFoundException(ErrorMessages.NOT_FOUND_PROGRAMMER);
 
@@ -49,7 +49,7 @@ namespace Application.Programmers
 
         public async Task CreateProgrammerAsync(ProgrammerCreateUpdateDTO dto)
         {
-            var existingProgrammer = await _programmerRepo.GetProgrammerAsync(new ProgrammerEmailSpec(dto.email).And(new ProgrammerAvailableSpec(true)));
+            var existingProgrammer = await _programmerRepo.GetProgrammerAsync(new ProgrammerEmailSpec(dto.email).And(new ProgrammerIsAvailableSpec(true)));
             if (existingProgrammer is not null)
                 throw new BadRequestException(ErrorMessages.TAKEN_PROGRAMMER_EMAIL);
 
@@ -81,13 +81,13 @@ namespace Application.Programmers
 
         public async Task UpdateProgrammerAsync(Guid id, ProgrammerCreateUpdateDTO dto)
         {
-            var programmer = await _programmerRepo.GetProgrammerAsync(new ProgrammerIdSpec(id).And(new ProgrammerAvailableSpec(true)));
+            var programmer = await _programmerRepo.GetProgrammerAsync(new ProgrammerIdSpec(id).And(new ProgrammerIsAvailableSpec(true)));
             if (programmer is null)
                 throw new NotFoundException(ErrorMessages.NOT_FOUND_PROGRAMMER);
 
             if (dto.email != programmer.Email)
             {
-                var ProgrammerWithExistingEmail = await _programmerRepo.GetProgrammerAsync(new ProgrammerEmailSpec(dto.email).And(new ProgrammerAvailableSpec(true)));
+                var ProgrammerWithExistingEmail = await _programmerRepo.GetProgrammerAsync(new ProgrammerEmailSpec(dto.email).And(new ProgrammerIsAvailableSpec(true)));
                 if (ProgrammerWithExistingEmail is not null)
                     throw new BadRequestException(ErrorMessages.TAKEN_PROGRAMMER_EMAIL);
             }
@@ -103,10 +103,11 @@ namespace Application.Programmers
             );
 
             // check if the added pm id is valid
-            ProjectManager newProgrammerProjectManager = null;
+            ProjectManager? newProgrammerProjectManager = null;
             if (dto.projectManagerId is not null && dto.projectManagerId.HasValue && dto.projectManagerId.Value != Guid.Empty)
             {
-                newProgrammerProjectManager = await _projectManagerRepo.GetProjectManagerAsync(new ProjectManagerIdSpec(dto.projectManagerId.Value));
+                newProgrammerProjectManager = await _projectManagerRepo.GetProjectManagerAsync(
+                    new ProjectManagerIdSpec(dto.projectManagerId.Value).And(new ProjectManagerIsAvailableSpec(true)));
                 if (newProgrammerProjectManager is null)
                     throw new NotFoundException(ErrorMessages.NOT_FOUND_PROJECT_MANAGER);
             }
@@ -134,7 +135,7 @@ namespace Application.Programmers
 
         public async Task DeleteProgrammerAsync(Guid id)
         {
-            var programmer = await _programmerRepo.GetProgrammerAsync(new ProgrammerIdSpec(id).And(new ProgrammerAvailableSpec(true)));
+            var programmer = await _programmerRepo.GetProgrammerAsync(new ProgrammerIdSpec(id).And(new ProgrammerIsAvailableSpec(true)));
             if (programmer is null)
                 throw new NotFoundException(ErrorMessages.NOT_FOUND_PROGRAMMER);
 
