@@ -1,5 +1,4 @@
-﻿using Domain.Commons;
-using Domain.Projects;
+﻿using Domain.Projects;
 
 namespace Application.Projects
 {

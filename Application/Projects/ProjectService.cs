@@ -81,8 +81,6 @@ namespace Application.Projects
             }
 
             var project = Project.Create(projectManager, customer, dto.description);
-            await _projectRepo.CreateProjectAsync(project);
-            await _uow.CommitAsync();
 
             List<ProgrammerProject> programmerProjects = new();
             foreach (var programmer in programmers)
@@ -92,9 +90,13 @@ namespace Application.Projects
                 await _uow.CommitAsync();
 
                 programmer.ProgrammerProjects.Add(programmerProject);
+                programmerProjects.Add(programmerProject);
             }
 
             project.ProgrammerProjects.AddRange(programmerProjects);
+            projectManager.Projects.Add(project);
+
+            await _projectRepo.CreateProjectAsync(project);
             await _uow.CommitAsync();
         }
 
