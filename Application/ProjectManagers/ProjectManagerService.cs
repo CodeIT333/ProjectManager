@@ -95,11 +95,9 @@ namespace Application.ProjectManagers
             if (projectManager is null)
                 throw new NotFoundException(ErrorMessages.NOT_FOUND_PROJECT_MANAGER);
 
-            // projects
             if (projectManager.Projects.Any())
                 throw new BadRequestException(ErrorMessages.EXISTING_PROJECT_FOR_PROJECT_MANAGER);
 
-            // programmers
             if (projectManager.Employees.Any())
                 projectManager.Employees.ForEach(p => p.RemoveProjectManager());
 

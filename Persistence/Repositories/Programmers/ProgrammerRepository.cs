@@ -14,7 +14,7 @@ namespace Persistence.Repositories.Programmers
         }
 
         public async Task<List<Programmer>> ListProgrammersAsync(Specification<Programmer>? spec = null) => 
-            await _dbContext.Programmers.AsQueryable().Where(spec?.ToExpressAll() ?? (p => true)).ToListAsync();
+            await _dbContext.Programmers.AsQueryable().Where(spec?.ToExpressAll() ?? (p => !p.IsArchived)).ToListAsync();
 
         public async Task<Programmer?> GetProgrammerAsync(Specification<Programmer> spec) => await _dbContext.Programmers
             .Include(p => p.ProgrammerProjects).ThenInclude(pp => pp.Project).ThenInclude(p => p.ProjectManager)
