@@ -43,5 +43,11 @@ namespace Domain.Projects
             CustomerId = null;
             IsArchived = true;
         }
+
+        public void SetProjectManager(ProjectManager? projectManager)
+        {
+            ProjectManager = projectManager;
+            ProjectManagerId = projectManager?.Id;
+        }
     }
 }

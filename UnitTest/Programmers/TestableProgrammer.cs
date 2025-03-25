@@ -21,7 +21,7 @@ namespace UnitTest.Programmers
             IsArchived = isArchived;
         }
 
-        public TestableProgrammer(string name, string phone, string email, ProgrammerRole role, bool isIntern, Address address)
+        public TestableProgrammer(string name, string phone, string email, ProgrammerRole role, bool isIntern, Address address, ProjectManager? manager = null)
         {
             Id = Guid.NewGuid();
             Name = name;
@@ -30,6 +30,8 @@ namespace UnitTest.Programmers
             Role = role;
             IsIntern = isIntern;
             Address = address;
+            ProjectManagerId = manager?.Id;
+            ProjectManager = manager;
         }
 
         public void SetProgrammerProjects(List<ProgrammerProject> programmerProjects)
