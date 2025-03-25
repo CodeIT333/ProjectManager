@@ -87,6 +87,9 @@ namespace Application.ProjectManagers
                 programmers
             );
 
+            if (programmers.Any())
+                programmers.ForEach(p => p.SetProjectManager(projectManager));
+
             await _projectManagerRepo.CreateProjectManagerAsync(projectManager);
             await _uow.CommitAsync();
         }
