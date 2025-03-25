@@ -21,9 +21,9 @@ namespace API.Controllers
 
         [HttpGet]
         [SwaggerResponse(200, Type = typeof(List<ProjectListDTO>))]
-        public async Task<ActionResult<List<ProjectListDTO>>> ListProjectsAsync()
+        public async Task<ActionResult<List<ProjectListDTO>>> ListProjectsAsync([FromQuery] bool isAvailable)
         {
-            var data = await _projectService.ListProjectsAsync();
+            var data = await _projectService.ListProjectsAsync(isAvailable);
             return Ok(data);
         }
 
@@ -52,6 +52,15 @@ namespace API.Controllers
         {
             await _projectService.UpdateProjectAsync(id, dto);
             return Ok();
+        }
+
+        [HttpDelete("{id}")]
+        [SwaggerResponse(201)]
+        [SwaggerResponse(404, Type = typeof(ErrorResponse))]
+        public async Task<IActionResult> DeleteProjectAsync(Guid id)
+        {
+            await _projectService.DeleteProjectAsync(id);
+            return NoContent();
         }
     }
 }

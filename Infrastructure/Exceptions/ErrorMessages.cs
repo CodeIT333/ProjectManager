@@ -34,6 +34,8 @@
 
         public const string TAKEN_PROJECT_MANAGER_EMAIL = "The project manager email is already taken.";
 
+        public const string EXISTING_PROJECT_FOR_PROJECT_MANAGER = "The project manager has existing project.";
+
         /*-----------------------------------------------Project--------------------------------------------*/
         public const string NOT_FOUND_PROJECT = "The project was not found.";
 
