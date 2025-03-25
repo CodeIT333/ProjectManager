@@ -63,17 +63,19 @@ namespace Application.Programmers
                 dto.address.door
             );
 
-            ProjectManager programmerProjectManager = null;
+            ProjectManager? programmerProjectManager = null;
             if (dto.projectManagerId is not null && dto.projectManagerId.HasValue && dto.projectManagerId.Value != Guid.Empty)
             {
-                programmerProjectManager = await _projectManagerRepo.GetProjectManagerAsync(new ProjectManagerIdSpec(dto.projectManagerId.Value));
+                programmerProjectManager = await _projectManagerRepo.GetProjectManagerAsync(
+                    new ProjectManagerIdSpec(dto.projectManagerId.Value).And(new ProjectManagerIsAvailableSpec(true)));
                 if (programmerProjectManager is null)
                     throw new NotFoundException(ErrorMessages.NOT_FOUND_PROJECT_MANAGER);
             }
 
             var programmer = Programmer.Create(dto.name, dto.email, dto.phone, programmerAddress, dto.dateOfBirth, dto.role, dto.isIntern, programmerProjectManager);
 
-            if (programmerProjectManager is not null) programmerProjectManager.Employees.Add(programmer);
+            if (programmerProjectManager is not null) 
+                programmerProjectManager.Employees.Add(programmer);
 
             await _programmerRepo.CreateProgrammerAsync(programmer);
             await _uow.CommitAsync();
