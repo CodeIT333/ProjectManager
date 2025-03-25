@@ -131,7 +131,6 @@ namespace Application.Programmers
             if (programmer is null)
                 throw new NotFoundException(ErrorMessages.NOT_FOUND_PROGRAMMER);
 
-            // pms
             if (programmer.ProjectManager is not null) 
                 programmer.ProjectManager.Employees.Remove(programmer);
 
@@ -139,9 +138,10 @@ namespace Application.Programmers
             {
                 foreach (var programmerProject in programmer.ProgrammerProjects.ToList())
                 {
-                    // projects
+
                     programmerProject.Project.ProgrammerProjects.Remove(programmerProject);
-                    // delete programmer projects
+                    programmer.ProgrammerProjects.Remove(programmerProject);
+
                     _programmerProjectRepo.DeleteProgrammerProject(programmerProject);
                 }
             }

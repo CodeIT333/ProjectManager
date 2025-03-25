@@ -262,7 +262,7 @@ namespace UnitTest.ProjectManagers
 
         /*--------------------------------------------------------Delete-------------------------------------------------------*/
         [Fact]
-        public async Task DeleteProjectManagerWithNoEmployeesAndProjectRelation_ReturnsOk()
+        public async Task DeleteProjectManagerWithoutEmployeesAndProjectRelation_ReturnsOk()
         {
             var projectManager = new TestableProjectManager("Alice Johnson", "06101234567", "email@gmail.com");
 
@@ -336,7 +336,7 @@ namespace UnitTest.ProjectManagers
 
             var mockData = (TestableProjectManager?)null;
             var mockSpec = new Mock<ISpecification<ProjectManager>>();
-            mockSpec.Setup(spec => spec.ToExpressAll()).Returns(p => !p.IsArchived);
+            mockSpec.Setup(spec => spec.ToExpressAll()).Returns(p => p.Id == projectManager.Id && !p.IsArchived);
 
             _mockProjectManagerRepo.Setup(repo => repo.GetProjectManagerAsync(It.IsAny<Specification<ProjectManager>>())).ReturnsAsync(mockData);
 

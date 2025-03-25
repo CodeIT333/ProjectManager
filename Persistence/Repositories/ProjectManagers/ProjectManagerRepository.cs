@@ -13,7 +13,7 @@ namespace Persistence.Repositories.ProjectManagers
             _dbContext = dbContext;
         }
 
-        public async Task<List<ProjectManager>> ListProjectManagersAsync(Specification<ProjectManager>? spec) => 
+        public async Task<List<ProjectManager>> ListProjectManagersAsync(Specification<ProjectManager>? spec = null) => 
             await _dbContext.ProjectManagers.Where(spec?.ToExpressAll() ?? (pm => !pm.IsArchived)).ToListAsync();
 
         public async Task<ProjectManager?> GetProjectManagerAsync(Specification<ProjectManager> spec) => await _dbContext.ProjectManagers
