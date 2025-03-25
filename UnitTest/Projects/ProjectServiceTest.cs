@@ -3,8 +3,11 @@ using Application.Customers;
 using Application.Programmers;
 using Application.ProjectManagers;
 using Application.Projects;
+using Application.Projects.DTOs;
 using Application.Projects.Specs;
+using Castle.Core.Resource;
 using Domain.Commons;
+using Domain.Customers;
 using Domain.Programmers;
 using Domain.ProjectManagers;
 using Domain.Projects;
@@ -287,6 +290,64 @@ namespace UnitTest.Projects
             }
         }
         */
+
+        /*--------------------------------------------------------Update-------------------------------------------------------*/
+        [Fact]
+        public async Task UpdateProjectWithProjectManagerAndCustomerAndProgrammers_ReturnsOk()
+        {
+            var newProgrammer = new TestableProgrammer("John Doe", "06201234567", "john@example.com", ProgrammerRole.FullStack, false,
+                new TestableAddress("Hungary", "6722", "Csongrád", "Szökőkút", "Alanyos Kálmán utca", "6/C", 2));
+            var oldProgrammer = new TestableProgrammer("Jane Smith", "06207654321", "jane@example.com", ProgrammerRole.Backend, true,
+                new TestableAddress("Hungary", "6722", "Csongrád", "Szökőkút", "Rágó utca", "33"));
+            var oldProjectManager = new TestableProjectManager("Old manager", "06101234567", "oldpm@gmail.com", new DateOnly(1996, 11, 13),
+                new TestableAddress("Hungary", "6722", "Csongrád", "Szeged", "Kossuth Lajos sugárút", "26/B", 12));
+            var newProjectManager = new TestableProjectManager("New manager", "06100000567", "newpm@gmail.com", new DateOnly(1998, 5, 18),
+                new TestableAddress("Hungary", "6722", "Csongrád", "Szeged", "Bükk Kálmán utca", "22"));
+            var newCustomer = new TestableCustomer("New Corp", "06501234566", "newcorp@acme.com");
+            var oldCustomer = new TestableCustomer("Old Corp", "06501234566", "oldcorp@acme.com");
+            var project = new TestableProject(
+                oldProjectManager,
+                oldCustomer,
+                new DateOnly(2024, 3, 18),
+                "Old Project description"
+            );
+            oldProjectManager.SetProjects(new List<Project> { project });
+            var programmerProject = new TestableProgrammerProject(oldProgrammer, project);
+            oldProgrammer.SetProgrammerProjects(new List<ProgrammerProject> { programmerProject });
+            project.SetProgrammerProjects(new List<ProgrammerProject> { programmerProject });
+            var dto = new ProjectCreateUpdateDTO
+            {
+                description = "Updated project description",
+                projectManagerId = oldProjectManager.Id,
+                customerId = newCustomer.Id,
+                programmerIds = new List<Guid>() { newProgrammer.Id }
+            };
+
+            var projectMockSpec = new Mock<ISpecification<Project>>();
+            projectMockSpec.Setup(spec => spec.ToExpressAll()).Returns(p => p.Id == project.Id && !p.IsArchived);
+            var customerMockSpec = new Mock<ISpecification<Customer>>();
+            customerMockSpec.Setup(spec => spec.ToExpressAll()).Returns(c => c.Id == newCustomer.Id);
+            var projectManagerMockSpec = new Mock<ISpecification<ProjectManager>>();
+            projectManagerMockSpec.Setup(spec => spec.ToExpressAll()).Returns(pm => pm.Id == newProjectManager.Id && !pm.IsArchived);
+            var programmerManagerMockSpec = new Mock<ISpecification<Programmer>>();
+            programmerManagerMockSpec.Setup(spec => spec.ToExpressAll()).Returns(p => p.Id == newProgrammer.Id && !p.IsArchived);
+
+            _mockProjectRepo.Setup(repo => repo.GetProjectAsync(It.IsAny<Specification<Project>>())).ReturnsAsync(project);
+            _mockCustomerRepo.Setup(repo => repo.GetCustomerAsync(It.IsAny<Guid>())).ReturnsAsync(newCustomer);
+            _mockProjectManagerRepo.Setup(repo => repo.GetProjectManagerAsync(It.IsAny<Specification<ProjectManager>>())).ReturnsAsync(newProjectManager);
+            _mockProgrammerRepo.Setup(repo => repo.GetProgrammerAsync(It.IsAny<Specification<Programmer>>())).ReturnsAsync(newProgrammer);
+
+            await _service.UpdateProjectAsync(project.Id, dto);
+
+            project.Customer.Should().Be(newCustomer);
+            project.ProjectManager.Should().Be(newProjectManager);
+            project.ProgrammerProjects.Should().NotBeEmpty();
+            project.ProgrammerProjects.Should().HaveCount(1);
+            project.ProgrammerProjects[0].Programmer.Should().Be(newProgrammer);
+            project.Description.Should().Be("Updated project description");
+
+            _mockUnitOfWork.Verify(uow => uow.CommitAsync(It.IsAny<CancellationToken>()), Times.Exactly(2));
+        }
 
         /*--------------------------------------------------------Delete-------------------------------------------------------*/
         [Fact]

@@ -1,6 +1,7 @@
 ﻿using Domain.Commons.Models;
 using Domain.Customers;
 using Domain.ProjectManagers;
+using System.ComponentModel;
 using System.ComponentModel.DataAnnotations;
 
 namespace Domain.Projects
@@ -37,21 +38,14 @@ namespace Domain.Projects
         }
 
         public void Update(
-            ProjectManager projectManager,
-            Customer customer,
+            ProjectManager? projectManager,
+            Customer? customer,
             string description
             )
         {
-            if (projectManager.Id != ProjectManagerId)
-            {
-                ProjectManager = projectManager;
-                ProjectManagerId = projectManager.Id;
-            }
-            if (customer.Id != CustomerId)
-            {
-                Customer = customer;
-                CustomerId = customer.Id;
-            }
+            SetProjectManager(projectManager);
+            Customer = customer;
+            CustomerId = customer?.Id;
             if (description != Description) Description = description;   
         }
 

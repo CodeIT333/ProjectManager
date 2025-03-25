@@ -100,11 +100,12 @@ namespace Application.Projects
 
         public async Task UpdateProjectAsync(Guid id, ProjectCreateUpdateDTO dto)
         {
-            var project = await _projectRepo.GetProjectAsync(id);
+            var project = await _projectRepo.GetProjectAsync(new ProjectIdSpec(id).And(new ProjectIsAvailableSpec(true)));
             if (project is null)
                 throw new NotFoundException(ErrorMessages.NOT_FOUND_PROJECT);
 
-            var projectManager = await _projectManagerRepos.GetProjectManagerAsync(new ProjectManagerIdSpec(dto.projectManagerId));
+            var projectManager = await _projectManagerRepos.GetProjectManagerAsync(
+                new ProjectManagerIdSpec(dto.projectManagerId).And(new ProjectManagerIsAvailableSpec(true)));
             if (projectManager is null)
                 throw new NotFoundException(ErrorMessages.NOT_FOUND_PROJECT_MANAGER);
 
@@ -117,7 +118,7 @@ namespace Application.Projects
             {
                 foreach (var programmerId in dto.programmerIds)
                 {
-                    var programmer = await _programmerRepo.GetProgrammerAsync(new ProgrammerIdSpec(programmerId));
+                    var programmer = await _programmerRepo.GetProgrammerAsync(new ProgrammerIdSpec(programmerId).And(new ProgrammerIsAvailableSpec(true)));
                     if (programmer is null)
                         throw new NotFoundException(ErrorMessages.NOT_FOUND_PROGRAMMER);
 
